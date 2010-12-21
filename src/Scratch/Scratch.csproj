@@ -77,6 +77,8 @@
     <Compile Include="SkipLastElementInEnumerable\Tests.cs" />
     <Compile Include="SplitIEnumerableIntoSets\IEnumerableTExtensions.cs" />
     <Compile Include="SplitIEnumerableIntoSets\Tests.cs" />
+    <Compile Include="StringSearching\KMPSearch.cs" />
+    <Compile Include="StringSearching\Tests.cs" />
     <Compile Include="SumValuesOfTwoLists\Numeric.cs" />
     <Compile Include="SumValuesOfTwoLists\Tests.cs" />
   </ItemGroup>
