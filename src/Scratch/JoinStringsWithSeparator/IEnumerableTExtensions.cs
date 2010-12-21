@@ -16,7 +16,7 @@ namespace Scratch.JoinStringsWithSeparator
     /// <summary>
     /// http://stackoverflow.com/questions/853137/adding-a-separator-to-a-list-of-items-for-display/853812#853812
     /// </summary>
-    public static class IEnumerableExtensions
+    public static class IEnumerableTExtensions
     {
         public static string Join<T>(this IEnumerable<T> items, string delimiter)
         {
