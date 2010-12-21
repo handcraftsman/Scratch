@@ -7,7 +7,7 @@ namespace Scratch.SumValuesOfTwoLists
     /// <summary>
     /// http://stackoverflow.com/questions/1190657/add-two-lists-of-different-length-in-c/1241495#1241495
     /// </summary>
-    public static class ListDoubleStatics
+    public static class Numeric
     {
         public static IList<double> Sum(IList<double> a, IList<double> b)
         {

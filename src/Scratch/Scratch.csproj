@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="ConvertHexStringToBytes\StringExtensions.cs" />
     <Compile Include="ConvertHexStringToBytes\Tests.cs" />
+    <Compile Include="FastCurrentDateTime\SystemService.cs" />
     <Compile Include="FindOutOfOrderListItems\IEnumerableTExtensions.cs" />
     <Compile Include="FindOutOfOrderListItems\Tests.cs" />
     <Compile Include="FindRangeGaps\Range.cs" />
@@ -64,12 +65,14 @@
     <Compile Include="JoinStringsWithSeparator\Tests.cs" />
     <Compile Include="ListsHaveSameContents\ICollectionTExtensions.cs" />
     <Compile Include="ListsHaveSameContents\Tests.cs" />
+    <Compile Include="PrimeFactors\Numeric.cs" />
+    <Compile Include="PrimeFactors\Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SkipLastElementInEnumerable\IEnumerableTExtensions.cs" />
     <Compile Include="SkipLastElementInEnumerable\Tests.cs" />
     <Compile Include="SplitIEnumerableIntoSets\IEnumerableTExtensions.cs" />
     <Compile Include="SplitIEnumerableIntoSets\Tests.cs" />
-    <Compile Include="SumValuesOfTwoLists\ListDoubleStatics.cs" />
+    <Compile Include="SumValuesOfTwoLists\Numeric.cs" />
     <Compile Include="SumValuesOfTwoLists\Tests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

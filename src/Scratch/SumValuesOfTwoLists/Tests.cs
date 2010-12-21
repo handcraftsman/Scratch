@@ -38,7 +38,7 @@ namespace Scratch.SumValuesOfTwoLists
                     3
                 };
 
-            var result = ListDoubleStatics.Sum(a, b);
+            var result = Numeric.Sum(a, b);
             result.Count.ShouldBeEqualTo(a.Count);
             result[0].ShouldBeEqualTo(a[0] + b[0]);
             result[1].ShouldBeEqualTo(a[1] + b[1]);
@@ -63,7 +63,7 @@ namespace Scratch.SumValuesOfTwoLists
                     3
                 };
 
-            var result = ListDoubleStatics.Sum(a, b);
+            var result = Numeric.Sum(a, b);
             result.Count.ShouldBeEqualTo(a.Count);
             result[0].ShouldBeEqualTo(a[0] + b[0]);
             result[1].ShouldBeEqualTo(a[1] + b[1]);
@@ -90,7 +90,7 @@ namespace Scratch.SumValuesOfTwoLists
                     5
                 };
 
-            var result = ListDoubleStatics.Sum(a, b);
+            var result = Numeric.Sum(a, b);
             result.Count.ShouldBeEqualTo(b.Count);
             result[0].ShouldBeEqualTo(a[0] + b[0]);
             result[1].ShouldBeEqualTo(a[1] + b[1]);
