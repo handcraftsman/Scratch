@@ -63,6 +63,7 @@
     <Compile Include="SkipLastElementInEnumerable\IEnumerableTExtensions.cs" />
     <Compile Include="SkipLastElementInEnumerable\Tests.cs" />
     <Compile Include="SplitIEnumerableIntoSets\IEnumerableTExtensions.cs" />
+    <Compile Include="SplitIEnumerableIntoSets\Tests.cs" />
     <Compile Include="SumValuesOfTwoLists\ListDoubleStatics.cs" />
     <Compile Include="SumValuesOfTwoLists\Tests.cs" />
   </ItemGroup>

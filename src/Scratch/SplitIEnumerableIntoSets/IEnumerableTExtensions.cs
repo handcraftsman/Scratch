@@ -14,6 +14,7 @@ namespace Scratch.SplitIEnumerableIntoSets
 {
     /// <summary>
     /// http://stackoverflow.com/questions/1034429/how-to-prevent-memory-overflow-when-using-an-ienumerablet-and-linq-to-sql/1035039#1035039
+    /// http://stackoverflow.com/questions/2222292/optimize-this-slow-linq-to-objects-query/2374520#2374520
     /// </summary>
     public static class IEnumerableExtensions
     {
