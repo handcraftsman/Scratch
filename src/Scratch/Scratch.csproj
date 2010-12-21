@@ -57,6 +57,9 @@
     <Compile Include="ConvertHexStringToBytes\Tests.cs" />
     <Compile Include="FindOutOfOrderListItems\IEnumerableTExtensions.cs" />
     <Compile Include="FindOutOfOrderListItems\Tests.cs" />
+    <Compile Include="FindRangeGaps\Range.cs" />
+    <Compile Include="FindRangeGaps\RangeGapFinder.cs" />
+    <Compile Include="FindRangeGaps\Tests.cs" />
     <Compile Include="JoinStringsWithSeparator\IEnumerableTExtensions.cs" />
     <Compile Include="JoinStringsWithSeparator\Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
