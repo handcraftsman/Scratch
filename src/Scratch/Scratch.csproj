@@ -65,6 +65,8 @@
     <Compile Include="JoinStringsWithSeparator\Tests.cs" />
     <Compile Include="ListsHaveSameContents\ICollectionTExtensions.cs" />
     <Compile Include="ListsHaveSameContents\Tests.cs" />
+    <Compile Include="PandigitalNumbers\Numeric.cs" />
+    <Compile Include="PandigitalNumbers\Tests.cs" />
     <Compile Include="PrimeFactors\Numeric.cs" />
     <Compile Include="PrimeFactors\Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
