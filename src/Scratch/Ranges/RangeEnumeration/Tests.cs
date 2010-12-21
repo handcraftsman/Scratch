@@ -25,7 +25,6 @@ namespace Scratch.RangeEnumeration
     public class Tests
     {
         private char[] _source;
-        
 
         [SetUp]
         public void BeforeEachTest()

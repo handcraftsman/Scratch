@@ -7,7 +7,10 @@
 //  * the terms of the MIT License.
 //  * You must not remove this notice from this software.
 //  * **********************************************************************************
+
 using System;
+
+using Scratch.Ranges.FindRangeGaps;
 
 namespace Scratch.FindRangeGaps
 {
