@@ -22,6 +22,22 @@ namespace Scratch.SplitIEnumerableIntoSets
     [TestFixture]
     public class Tests
     {
+        /// <summary>
+        /// http://stackoverflow.com/questions/4461367/linq-to-objects-return-pairs-of-numbers-from-list-of-numbers/4471596#4471596
+        /// </summary>
+        [Test]
+        public void Should_fill_an_incomplete_set_if_requested()
+        {
+            var nums = new[] { 1, 2, 3, 4, 5, 6, 7 };
+            const int numberInSet = 2;
+            const int fillValue = 9;
+            var pairs = nums.InSetsOf(numberInSet, true, fillValue).ToArray();
+            var last = pairs.Last();
+            last.Count.ShouldBeEqualTo(numberInSet);
+            last[0].ShouldBeEqualTo(nums.Last());
+            last[1].ShouldBeEqualTo(fillValue);
+        }
+
         [Test]
         public void Should_return_the_correct_number_of_sets_if_the_input_contains_a_multiple_of_the_setSize()
         {
