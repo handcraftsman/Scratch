@@ -58,6 +58,8 @@
     <Compile Include="JoinStringsWithSeparator\IEnumerableTExtensions.cs" />
     <Compile Include="JoinStringsWithSeparator\Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SkipLastElementInEnumerable\IEnumerableTExtensions.cs" />
+    <Compile Include="SkipLastElementInEnumerable\Tests.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
