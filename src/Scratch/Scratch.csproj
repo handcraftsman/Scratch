@@ -96,6 +96,7 @@
     <Compile Include="PrimeFactors\Numeric.cs" />
     <Compile Include="PrimeFactors\Tests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Ranges\MergeRanges\Tests.cs" />
     <Compile Include="Ranges\RangeEnumeration\Pair.cs" />
     <Compile Include="Ranges\RangeEnumeration\Tests.cs" />
     <Compile Include="ShuffleIEnumerable\IEnumerableExtensions.cs" />
