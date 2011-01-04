@@ -59,42 +59,31 @@ namespace Scratch.Ranges.LongestNonOverlappingRanges
 		}
 
 		/// <summary>
-		/// create a hashtable of start->list of tuples that start there
-		/// put all tuples in a queue of tupleSets
-		/// set the longestTupleSet to the first tuple
-		/// while the queue is not empty
-		/// 	take tupleSet from the queue
-		/// 	if any tuples start where the tupleSet ends
-		/// 		foreach tuple that starts where the tupleSet ends
-		/// 			enqueue new tupleSet of tupleSet + tuple
-		/// 		continue
+		///     create a hashtable of start->list of tuples that start there
+		///     put all tuples in a queue of tupleSets
+		///     set the longestTupleSet to the first tuple
+		///     while the queue is not empty
+		///     take tupleSet from the queue
+		///     if any tuples start where the tupleSet ends
+		///     foreach tuple that starts where the tupleSet ends
+		///     enqueue new tupleSet of tupleSet + tuple
+		///     continue
 		/// 
-		/// 	if tupleSet is longer than longestTupleSet
-		/// 		replace longestTupleSet with tupleSet
+		///     if tupleSet is longer than longestTupleSet
+		///     replace longestTupleSet with tupleSet
 		/// 
-		/// return longestTupleSet
+		///     return longestTupleSet
 		/// </summary>
-		/// <param name="input"></param>
+		/// <param name = "input"></param>
 		/// <returns></returns>
-		private static IList<Pair<int, int>> FindLongestNonOverlappingRangeSet(IList<Pair<int, int>> input)
+		public static IList<Pair<int, int>> FindLongestNonOverlappingRangeSet(IList<Pair<int, int>> input)
 		{
-			var rangeStarts = new Dictionary<int, List<Pair<int, int>>>();
-			var adjacentTuples = new Queue<List<Pair<int, int>>>();
-			foreach (var tuple in input)
-			{
-				adjacentTuples.Enqueue(new List<Pair<int, int>>
+			var rangeStarts = input.ToLookup(x => x.First, x => x);
+			var adjacentTuples = new Queue<List<Pair<int, int>>>(
+				input.Select(x => new List<Pair<int, int>>
 					{
-						tuple
-					});
-				int start = tuple.First;
-				List<Pair<int, int>> sameStart;
-				if (!rangeStarts.TryGetValue(start, out sameStart))
-				{
-					sameStart = new List<Pair<int, int>>();
-					rangeStarts.Add(start, sameStart);
-				}
-				sameStart.Add(tuple);
-			}
+						x
+					}));
 
 			var longest = new List<Pair<int, int>>
 				{
@@ -106,9 +95,9 @@ namespace Scratch.Ranges.LongestNonOverlappingRanges
 			{
 				var tupleSet = adjacentTuples.Dequeue();
 				var last = tupleSet.Last();
-				List<Pair<int, int>> sameStart;
 				int end = last.First + last.Second;
-				if (rangeStarts.TryGetValue(end, out sameStart))
+				var sameStart = rangeStarts[end];
+				if (sameStart.Any())
 				{
 					foreach (var nextTuple in sameStart)
 					{
