@@ -15,7 +15,7 @@ using FluentAssert;
 
 using NUnit.Framework;
 
-namespace Scratch.Ranges.CombineRanges
+namespace Scratch.Ranges.ListToRanges
 {
     /// <summary>
     /// http://stackoverflow.com/questions/4147935/converting-sets-of-integers-into-ranges-using-c

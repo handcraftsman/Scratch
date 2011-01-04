@@ -77,7 +77,7 @@
     <Compile Include="FindOutOfOrderListItems\IEnumerableTExtensions.cs" />
     <Compile Include="FindOutOfOrderListItems\Tests.cs" />
     <Compile Include="GeneticAlgorithm\Tests.cs" />
-    <Compile Include="Ranges\CombineRanges\Tests.cs" />
+    <Compile Include="Ranges\ListToRanges\Tests.cs" />
     <Compile Include="Ranges\FindRangeGaps\Range.cs" />
     <Compile Include="Ranges\FindRangeGaps\RangeGapFinder.cs" />
     <Compile Include="Ranges\FindRangeGaps\Tests.cs" />
