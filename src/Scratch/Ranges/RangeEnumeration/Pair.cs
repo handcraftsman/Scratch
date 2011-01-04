@@ -7,7 +7,7 @@
 //  * the terms of the MIT License.
 //  * You must not remove this notice from this software.
 //  * **********************************************************************************
-namespace Scratch.RangeEnumeration
+namespace Scratch.Ranges.RangeEnumeration
 {
     /// <summary>
     /// http://stackoverflow.com/questions/4271060/can-someone-come-up-with-a-better-version-of-this-enumerator

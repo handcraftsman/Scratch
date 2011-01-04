@@ -16,7 +16,7 @@ using FluentAssert;
 
 using NUnit.Framework;
 
-namespace Scratch.RangeEnumeration
+namespace Scratch.Ranges.RangeEnumeration
 {
     /// <summary>
     /// // http://stackoverflow.com/questions/4271060/can-someone-come-up-with-a-better-version-of-this-enumerator

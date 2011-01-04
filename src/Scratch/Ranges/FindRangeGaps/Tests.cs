@@ -14,9 +14,7 @@ using FluentAssert;
 
 using NUnit.Framework;
 
-using Scratch.Ranges.FindRangeGaps;
-
-namespace Scratch.FindRangeGaps
+namespace Scratch.Ranges.FindRangeGaps
 {
     public class Tests
     {

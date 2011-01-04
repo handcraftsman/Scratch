@@ -10,9 +10,7 @@
 
 using System;
 
-using Scratch.Ranges.FindRangeGaps;
-
-namespace Scratch.FindRangeGaps
+namespace Scratch.Ranges.FindRangeGaps
 {
     /// <summary>
     /// http://stackoverflow.com/questions/2698143/i-need-to-add-ranges-and-if-a-range-is-missed-while-adding-i-should-display-a-mes/2762570#2762570
