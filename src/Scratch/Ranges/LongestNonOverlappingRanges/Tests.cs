@@ -22,6 +22,7 @@ namespace Scratch.Ranges.LongestNonOverlappingRanges
 	/// <summary>
 	///     http://stackoverflow.com/questions/4593583/algorithm-to-find-longest-non-overlapping-sequences
 	///     Pairs are start and length
+	/// </summary>
 	[TestFixture]
 	public class Tests
 	{
