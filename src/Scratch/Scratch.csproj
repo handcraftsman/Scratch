@@ -78,6 +78,9 @@
     <Compile Include="FindOutOfOrderListItems\Tests.cs" />
     <Compile Include="GeneticAlgorithm\GeneticSolver.cs" />
     <Compile Include="GeneticAlgorithm\Tests.cs" />
+    <Compile Include="MaximizeCharacters\Tests.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Ranges\ListToRanges\Tests.cs" />
     <Compile Include="Ranges\FindRangeGaps\Range.cs" />
     <Compile Include="Ranges\FindRangeGaps\RangeGapFinder.cs" />
