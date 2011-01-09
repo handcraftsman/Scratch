@@ -23,12 +23,11 @@ namespace Scratch.PrimeNumbers
             yield return 2;
             yield return 3;
             int k = 1;
-            while (k > 0)
-            {
-                yield return 6 * k - 1;
-                yield return 6 * k + 1;
-                k++;
-            }
+            loop:
+            yield return k * 6 - 1;
+            yield return k * 6 + 1;
+            k++;
+            goto loop;
         }
 
         public static IEnumerable<int> Primes()

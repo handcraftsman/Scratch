@@ -33,7 +33,7 @@ namespace Scratch.PrimeNumbers
         public void Time_to_get_100000th_Prime()
         {
             const int primeIndex = 100000;
-            const int runs = 10;
+            const int runs = 100;
             const int expect = 1299709;
 
             Time(runs, primeIndex, expect);
@@ -48,7 +48,7 @@ namespace Scratch.PrimeNumbers
         public void Time_to_get_10000th_Prime()
         {
             const int primeIndex = 10000;
-            const int runs = 10;
+            const int runs = 1000;
             const int expect = 104729;
 
             Time(runs, primeIndex, expect);
@@ -63,7 +63,7 @@ namespace Scratch.PrimeNumbers
         public void Time_to_get_1000th_Prime()
         {
             const int primeIndex = 1000;
-            const int runs = 10;
+            const int runs = 1000;
             const int expect = 7919;
 
             Time(runs, primeIndex, expect);
