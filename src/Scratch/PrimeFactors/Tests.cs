@@ -30,7 +30,7 @@ namespace Scratch.PrimeFactors
                 .GroupBy(x => x)
                 .ToDictionary(x => x.Key, x => x.Count());
 
-            var outputs = Numeric.Primes()
+            var outputs = PrimeNumbers.Numeric.Primes()
                 .TakeWhile(x => x <= factors.Max(y => y.Key))
                 .Select(x => factors.ContainsKey(x) ? factors[x] : 0)
                 .Select(x => x.ToString())

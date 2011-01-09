@@ -20,20 +20,12 @@ namespace Scratch.PrimeFactors
     {
         public static IEnumerable<int> Factorize(int input)
         {
-            int first = Primes()
+            int first = PrimeNumbers.Numeric.Primes()
                 .TakeWhile(x => x <= Math.Sqrt(input))
                 .FirstOrDefault(x => input % x == 0);
             return first == 0
                        ? new[] { input }
                        : new[] { first }.Concat(Factorize(input / first));
-        }
-
-        public static IEnumerable<int> Primes()
-        {
-            var ints = Enumerable.Range(2, Int32.MaxValue - 1);
-            return ints.Where(x => !ints
-                                        .TakeWhile(y => y <= Math.Sqrt(x))
-                                        .Any(y => x % y == 0));
         }
     }
 }

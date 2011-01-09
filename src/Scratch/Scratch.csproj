@@ -82,6 +82,8 @@
     <Compile Include="MaximizeCharacters\Tests.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="PrimeNumbers\Numeric.cs" />
+    <Compile Include="PrimeNumbers\Tests.cs" />
     <Compile Include="Ranges\ListToRanges\Tests.cs" />
     <Compile Include="Ranges\FindRangeGaps\Range.cs" />
     <Compile Include="Ranges\FindRangeGaps\RangeGapFinder.cs" />
