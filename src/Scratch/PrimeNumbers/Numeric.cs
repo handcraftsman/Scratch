@@ -33,13 +33,19 @@ namespace Scratch.PrimeNumbers
 
         public static IEnumerable<int> Primes()
         {
-            return PotentialPrimes().Where(x =>
+            var memoized = new List<int>();
+            var primes = PotentialPrimes().Where(x =>
                 {
                     double sqrt = Math.Sqrt(x);
-                    return !PotentialPrimes()
+                    return !memoized
                                 .TakeWhile(y => y <= sqrt)
                                 .Any(y => x % y == 0);
                 });
+            foreach (int prime in primes)
+            {
+                yield return prime;
+                memoized.Add(prime);
+            }
         }
     }
 }

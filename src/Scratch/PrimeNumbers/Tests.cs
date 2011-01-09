@@ -27,7 +27,7 @@ namespace Scratch.PrimeNumbers
         /// <summary>
         /// http://www.bigprimes.net/cruncher/1299709/
         /// 
-        /// expect ~1.77401945
+        /// expect ~0.68440924
         /// </summary>
         [Test]
         public void Time_to_get_100000th_Prime()
@@ -42,7 +42,7 @@ namespace Scratch.PrimeNumbers
         /// <summary>
         /// http://www.bigprimes.net/cruncher/104729/
         /// 
-        /// expect ~0.06597192
+        /// expect ~0.02979869
         /// </summary>
         [Test]
         public void Time_to_get_10000th_Prime()
@@ -57,7 +57,7 @@ namespace Scratch.PrimeNumbers
         /// <summary>
         /// http://www.bigprimes.net/cruncher/7919/
         /// 
-        /// expect ~0.00517175
+        /// expect ~0.00138686
         /// </summary>
         [Test]
         public void Time_to_get_1000th_Prime()
