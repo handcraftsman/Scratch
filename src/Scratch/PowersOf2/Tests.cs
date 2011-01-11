@@ -31,5 +31,48 @@ namespace Scratch.PowersOf2
 				}
 			}
 		}
+
+		/// <summary>
+		///     http://stackoverflow.com/questions/53161/find-the-highest-order-bit-in-c
+		/// </summary>
+		[TestFixture]
+		public class Power_of_2_less_than_the_input
+		{
+			[Test]
+			public void Inline()
+			{
+				for (int i = -2; i < 10; i++)
+				{
+					int nextLowerPowerOf2 = i <= 0
+					                        	? 0
+					                        	: ((i & (~i + 1)) == i)
+					                        	  	? i >> 1
+					                        	  	: (1 << (int)Math.Log(i, 2));
+					Console.WriteLine(i + "\t" + nextLowerPowerOf2);
+				}
+			}
+
+			[Test]
+			public void Using_methods()
+			{
+				for (int i = -2; i < 10; i++)
+				{
+					int nextLowerPowerOf2 = IsPowerOfTwo(i)
+					                        	? i >> 1
+					                        	: GetPowerOfTwoLessThanOrEqualTo(i);
+					Console.WriteLine(i + "\t" + nextLowerPowerOf2);
+				}
+			}
+
+			private static int GetPowerOfTwoLessThanOrEqualTo(int x)
+			{
+				return (x <= 0 ? 0 : (1 << (int)Math.Log(x, 2)));
+			}
+
+			private static bool IsPowerOfTwo(int x)
+			{
+				return (((x & (~x + 1)) == x) && (x > 0));
+			}
+		}
 	}
 }
