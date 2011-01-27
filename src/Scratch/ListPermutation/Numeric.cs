@@ -14,9 +14,9 @@ namespace Scratch.ListPermutation
     /// <summary>
     /// http://handcraftsman.wordpress.com/2010/11/11/generating-all-permutations-of-a-sequence-in-csharp/
     /// </summary>
-    public static class Int32Extensions
+    public static class Numeric
     {
-        public static int Factorial(this int n)
+        public static int Factorial(int n)
         {
             if (n < 0)
             {
@@ -26,7 +26,12 @@ namespace Scratch.ListPermutation
             {
                 return 1;
             }
-            return n * Factorial(n - 1);
+        	int result = 1;
+			for (int i = n; i > 0; i-- )
+			{
+				result *= i;
+			}
+        	return result;
         }
     }
 }

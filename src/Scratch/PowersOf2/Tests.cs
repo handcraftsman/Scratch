@@ -69,6 +69,11 @@ namespace Scratch.PowersOf2
 				return (x <= 0 ? 0 : (1 << (int)Math.Log(x, 2)));
 			}
 
+			/// <summary>
+			/// based on http://www.exploringbinary.com/ten-ways-to-check-if-an-integer-is-a-power-of-two-in-c/
+			/// </summary>
+			/// <param name="x"></param>
+			/// <returns></returns>
 			private static bool IsPowerOfTwo(int x)
 			{
 				return (((x & (~x + 1)) == x) && (x > 0));

@@ -95,7 +95,7 @@
     <Compile Include="JoinStringsWithSeparator\Tests.cs" />
     <Compile Include="ListPermutation\IListExtensions.cs" />
     <Compile Include="ListPermutation\IListExtensionsTests.cs" />
-    <Compile Include="ListPermutation\Int32Extensions.cs" />
+    <Compile Include="ListPermutation\Numeric.cs" />
     <Compile Include="ListsHaveSameContents\ICollectionTExtensions.cs" />
     <Compile Include="ListsHaveSameContents\Tests.cs" />
     <Compile Include="ManOrBoyCompiler\Tests.cs" />

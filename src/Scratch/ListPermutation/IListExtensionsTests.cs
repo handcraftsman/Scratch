@@ -138,8 +138,8 @@ namespace Scratch.ListPermutation
                 else
                 {
                     _expectedPermutationCount
-                        = _input.Count.Factorial()
-                          / (_input.Count - _length).Factorial();
+                        = Numeric.Factorial(_input.Count)
+                          / Numeric.Factorial(_input.Count - _length);
                 }
             }
 
@@ -388,8 +388,8 @@ namespace Scratch.ListPermutation
                 else
                 {
                     _expectedPermutationCount
-                        = _input.Count.Factorial()
-                          / (_input.Count - _length).Factorial();
+						= Numeric.Factorial(_input.Count)
+						  / Numeric.Factorial(_input.Count - _length);
                 }
             }
 
