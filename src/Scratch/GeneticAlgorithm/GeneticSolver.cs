@@ -193,7 +193,7 @@ namespace Scratch.GeneticAlgorithm
 
 		private void PrintBest(int generation, List<ga_struct> gav)
 		{
-			Console.WriteLine("Generation {0} best: {1} ({2})",
+			Console.WriteLine("Generation {0} best: {1} (fitness: {2})",
 			                  (1 + generation).ToString().PadLeft(_gaMaxGenerationsWithoutImprovement.ToString().Length),
 			                  gav[0].Genes,
 			                  gav[0].Fitness);
