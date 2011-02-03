@@ -109,6 +109,7 @@
     <Compile Include="Ranges\MergeRanges\Tests.cs" />
     <Compile Include="Ranges\RangeEnumeration\Pair.cs" />
     <Compile Include="Ranges\RangeEnumeration\Tests.cs" />
+    <Compile Include="RegexFromSamples\Tests.cs" />
     <Compile Include="ShuffleIEnumerable\IEnumerableExtensions.cs" />
     <Compile Include="SkipLastElementInEnumerable\IEnumerableTExtensions.cs" />
     <Compile Include="SkipLastElementInEnumerable\Tests.cs" />
