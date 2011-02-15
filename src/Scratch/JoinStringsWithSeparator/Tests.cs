@@ -33,7 +33,7 @@ namespace Scratch.JoinStringsWithSeparator
         /// 00:00:00.0074332    True    CheckForEndInsideLoop_StringBuilder
         /// 00:00:00.0093083    True    RemoveFinalDelimiter_StringBuilder
         /// </summary>
-        [Test]
+        [Test, Explicit]
         public void Time_variants()
         {
             const string item = "a";
