@@ -31,7 +31,7 @@ namespace Scratch.RegexFromSamples
 			var target = new[] { "00", "01", "10" };
 			var dontMatch = new[] { "11" };
 
-			GenerateRegex(target, dontMatch);
+			GenerateRegex(target, dontMatch, 6);
 		}
 
 		[Test]
@@ -40,7 +40,7 @@ namespace Scratch.RegexFromSamples
 			var target = new[] { "00", "01", "11" };
 			var dontMatch = new[] { "10" };
 
-			GenerateRegex(target, dontMatch);
+			GenerateRegex(target, dontMatch, 4);
 		}
 
 		[Test]
@@ -49,10 +49,10 @@ namespace Scratch.RegexFromSamples
 			var target = new[] { "0", "00", "0000", "00000" };
 			var dontMatch = new[] { "000", "000000" };
 
-			GenerateRegex(target, dontMatch);
+			GenerateRegex(target, dontMatch, 9);
 		}
 
-		private static void GenerateRegex(IEnumerable<string> target, IEnumerable<string> dontMatch)
+		private static void GenerateRegex(IEnumerable<string> target, IEnumerable<string> dontMatch, int expectedLength)
 		{
 			string distinctSymbols = new String(target.SelectMany(x => x).Distinct().ToArray());
 			string genes = distinctSymbols + "?*()+";
@@ -72,11 +72,15 @@ namespace Scratch.RegexFromSamples
 			int targetGeneLength = 1;
 			for (;;)
 			{
-				string best = new GeneticSolver(50).GetBestGenetically(targetGeneLength, genes, calcFitness, true);
+				string best = new GeneticSolver(50+10*targetGeneLength).GetBestGenetically(targetGeneLength, genes, calcFitness, true);
 				if (calcFitness(best) != 0)
 				{
 					Console.WriteLine("-- not solved with regex of length " + targetGeneLength);
 					targetGeneLength++;
+                    if (targetGeneLength > expectedLength)
+                    {
+                        Assert.Fail("failed to find a solution within the expected length");
+                    }
 					continue;
 				}
 				Console.WriteLine("solved with: " + best);
