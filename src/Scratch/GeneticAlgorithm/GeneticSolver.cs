@@ -51,16 +51,16 @@ namespace Scratch.GeneticAlgorithm
     {
         private const decimal ChildCreationTypeStep = .5m;
         private const int DefaultActiveFillPercentage = 1;
-        private const int DefaultCrossoverPercentage = 45;
+        private const int DefaultCrossoverPercentage = 59;
         private const int DefaultMaxGenerationsWithoutImprovement = 16384;
-        private const int DefaultMutationPercentage = 14;
+        private const int DefaultMutationPercentage = 20;
         private const float DefaultMutationRate = 0.25f;
-        private const int DefaultSplicePercentage = 40;
+        private const int DefaultSplicePercentage = 20;
         private const int EliteParentCount = (int)(GaPopsize * GaElitrate);
         private const float GaElitrate = 0.10f;
         private const int GaPopsize = 2048;
         private const int MaxImprovmentsToKeepFromEachRound = 5;
-        private const decimal MinActiveFillPercentage = .5m;
+        private const decimal MinActiveFillPercentage = 1m;
         private const int MinCrossoverPercentage = 5;
         private const int MinMutationPercentage = 7;
         private const int MinSplicePercentage = 5;
