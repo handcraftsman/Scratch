@@ -31,12 +31,12 @@ namespace Scratch.GeneticImageCopy
 
         [Test]
         [Explicit]
-        public void Draw_Monalisa_190x200_with_50_triangles()
+        public void Draw_Monalisa_190x200_with_150_circles()
         {
             const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
-            GeneticallyDuplicateWithShape<Triangle>(fileNameWithPath, 50);
-        } 
-        
+            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 150);
+        }
+
         [Test]
         [Explicit]
         public void Draw_Monalisa_190x200_with_50_circles()
@@ -44,13 +44,13 @@ namespace Scratch.GeneticImageCopy
             const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
             GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 50);
         }
-        
+
         [Test]
         [Explicit]
-        public void Draw_Monalisa_190x200_with_150_circles()
+        public void Draw_Monalisa_190x200_with_50_triangles()
         {
             const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
-            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 150);
+            GeneticallyDuplicateWithShape<Triangle>(fileNameWithPath, 50);
         }
 
         private static void Display<T>(int generation, uint fitness, string genes, int shapeSizeInBytes, int width, int height, string howCreated, int max, Bitmap targetImage, Stopwatch timer) where T : IShape
@@ -75,8 +75,8 @@ namespace Scratch.GeneticImageCopy
                                 }
                             }
 
-                            graphics.FillRectangle(Brushes.White, 0, height, 2*width, 20);
-                            graphics.DrawString("Generation " + generation.ToString().PadRight(10) + percentage.ToString().PadLeft(5) + "%     elapsed: " + timer.Elapsed, new Font("Times New Roman", 12), Brushes.Black, 2, height + 1);
+                            graphics.FillRectangle(Brushes.White, 0, height, 2 * width, 20);
+                            graphics.DrawString("Generation " + generation.ToString().PadRight(10) + percentage.ToString().PadLeft(5) + "%    elapsed: " + timer.Elapsed, new Font("Times New Roman", 12), Brushes.Black, 2, height + 1);
                         }
 
                         string filename = "image_" + generation + ".jpg";
@@ -117,11 +117,9 @@ namespace Scratch.GeneticImageCopy
         {
             _previousPercentage = 100;
             byte[] bitmapBytes;
-            int width;
-            int height;
             var targetImage = new Bitmap(fileNameWithPath);
-            width = targetImage.Width;
-            height = targetImage.Height;
+            int width = targetImage.Width;
+            int height = targetImage.Height;
             using (var stream = new MemoryStream())
             {
                 targetImage.Save(stream, ImageFormat.Bmp);
@@ -229,8 +227,8 @@ namespace Scratch.GeneticImageCopy
         {
             return GetEncodingSizeInBytes(imageWidth, imageHeight, NumberOfPoints);
         }
-    }    
-    
+    }
+
     public class Line : Shape, IShape
     {
         private const int NumberOfPoints = 2;
@@ -269,8 +267,8 @@ namespace Scratch.GeneticImageCopy
         {
             return GetEncodingSizeInBytes(imageWidth, imageHeight, NumberOfPoints);
         }
-    }   
-    
+    }
+
     public class Circle : Shape, IShape
     {
         private const int NumberOfPoints = 2;

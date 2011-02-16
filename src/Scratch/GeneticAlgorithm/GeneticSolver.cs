@@ -50,20 +50,20 @@ namespace Scratch.GeneticAlgorithm
     public class GeneticSolver
     {
         private const decimal ChildCreationTypeStep = .5m;
-        private const int DefaultActiveFillPercentage = 1;
-        private const int DefaultCrossoverPercentage = 59;
+        private const int DefaultCrossoverPercentage = 35;
         private const int DefaultMaxGenerationsWithoutImprovement = 16384;
         private const int DefaultMutationPercentage = 20;
         private const float DefaultMutationRate = 0.25f;
-        private const int DefaultSplicePercentage = 20;
+        private const int DefaultSplicePercentage = 30;
+        private const int DefaultSwapPercentage = 15;
         private const int EliteParentCount = (int)(GaPopsize * GaElitrate);
         private const float GaElitrate = 0.10f;
         private const int GaPopsize = 2048;
         private const int MaxImprovmentsToKeepFromEachRound = 5;
-        private const decimal MinActiveFillPercentage = 1m;
         private const int MinCrossoverPercentage = 5;
         private const int MinMutationPercentage = 7;
         private const int MinSplicePercentage = 5;
+        private const int MinSwapPercentage = 5;
         private const int RandomCitizenCount = 10;
 
         private const float SlideRate = 0.001f;
@@ -72,10 +72,10 @@ namespace Scratch.GeneticAlgorithm
         private static readonly Random Random = new Random((int)DateTime.Now.Ticks);
         private static float _slidingMutationRate = DefaultMutationRate;
         private readonly int _gaMaxGenerationsWithoutImprovement = DefaultMaxGenerationsWithoutImprovement;
-        private decimal _activeFillPercentage;
         private decimal _crossoverPercentage;
         private decimal _mutationPercentage;
         private decimal _splicePercentage;
+        private decimal _swapPercentage;
 
         public GeneticSolver()
             : this(DefaultMaxGenerationsWithoutImprovement)
@@ -87,9 +87,10 @@ namespace Scratch.GeneticAlgorithm
             _splicePercentage = DefaultSplicePercentage;
             _crossoverPercentage = DefaultCrossoverPercentage;
             _mutationPercentage = DefaultMutationPercentage;
-            _activeFillPercentage = DefaultActiveFillPercentage;
+            _swapPercentage = DefaultSwapPercentage;
 
             _gaMaxGenerationsWithoutImprovement = maxGenerationsWithoutImprovement;
+
             DisplayGenes = (generation, fitness, genes, howCreated) => Console.WriteLine("Generation {0} fitness {1}: {2}", generation.ToString().PadLeft(_gaMaxGenerationsWithoutImprovement.ToString().Length), fitness, genes);
         }
 
@@ -130,41 +131,13 @@ namespace Scratch.GeneticAlgorithm
             }
         }
 
-        private void CreateNextGeneration(int numberOfGenesToUse, List<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene, IEnumerable<GeneSequence> previousBests, string possibleGenes)
+        private void CreateNextGeneration(int numberOfGenesToUse, List<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene, IEnumerable<GeneSequence> previousBests)
         {
             CopyBestParents(population, buffer);
             CopyPreviousBests(previousBests, population);
             SortByFitness(population);
 
-            GenerateChildren(numberOfGenesToUse, population, buffer, getRandomGene, possibleGenes);
-        }
-
-        private static GeneSequence FindActiveFill(int numberOfGenesToUse, IEnumerable<GeneSequence> parents, string possibleGenes, Func<char> getRandomGene)
-        {
-            var activeWithGap = Enumerable.Range(0, numberOfGenesToUse)
-                .Shuffle()
-                .Select(index => new
-                    {
-                        index,
-                        used = new HashSet<char>(parents.Select(x => x.Genes[index]))
-                    })
-                .FirstOrDefault(x => x.used.Count > 1 && x.used.Count < possibleGenes.Length);
-
-            var parent = parents.Shuffle().First();
-            if (activeWithGap == null)
-            {
-                return Mutate(numberOfGenesToUse, parent, getRandomGene);
-            }
-
-            char unusedGene = possibleGenes.Shuffle()
-                .First(x => !activeWithGap.used.Contains(x));
-
-            var child = parent.Clone();
-            var genes = child.Genes.ToCharArray();
-            genes[activeWithGap.index] = unusedGene;
-            child.Genes = new String(genes);
-            child.HowCreated = ChildCreationTypeDescription.ActiveFill;
-            return child;
+            GenerateChildren(numberOfGenesToUse, population, buffer, getRandomGene);
         }
 
         private static int FitnessSort(GeneSequence x, GeneSequence y)
@@ -172,7 +145,7 @@ namespace Scratch.GeneticAlgorithm
             return x.Fitness.CompareTo(y.Fitness);
         }
 
-        private void GenerateChildren(int numberOfGenesToUse, IList<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene, string possibleGenes)
+        private void GenerateChildren(int numberOfGenesToUse, IList<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene)
         {
             double avgFitness = population.Average(x => x.Fitness);
             int avgFitnessPoint = population.TakeWhile(x => x.Fitness <= avgFitness).Count();
@@ -206,7 +179,7 @@ namespace Scratch.GeneticAlgorithm
                     continue;
                 }
 
-                buffer[i] = FindActiveFill(numberOfGenesToUse, parents, possibleGenes, getRandomGene);
+                buffer[i] = SwapTwoGenes(numberOfGenesToUse, parents);
             }
         }
 
@@ -235,7 +208,11 @@ namespace Scratch.GeneticAlgorithm
             InitPopulation(numberOfGenesToUse, popAlpha, popBeta, getRandomGene);
             var population = popAlpha;
             var spare = popBeta;
-            var previousBests = new List<GeneSequence>();
+            var previousBests = new List<GeneSequence>
+                {
+                    population.First()
+                };
+            previousBests[0].Fitness = calcFitness(previousBests[0].Genes);
             _slidingMutationRate = DefaultMutationRate;
             int generation = 0;
             for (int i = 0; i < _gaMaxGenerationsWithoutImprovement; i++, generation++)
@@ -244,25 +221,18 @@ namespace Scratch.GeneticAlgorithm
                 var populationWithFitness = CalcFitness(population, calcFitness);
 
                 var first = populationWithFitness.First();
-                uint previousBestFitness = previousBests.Any()
-                                               ? previousBests.Last().Fitness
-                                               : population.First().Fitness;
-                var newSequences = UseFastSearch && i < 20
-                                       ? populationWithFitness
-                                             .TakeWhile(x => x.Fitness <= previousBestFitness)
-                                             .Where(x => !previousBestLookup.Contains(x.Genes))
-                                             .Take(MaxImprovmentsToKeepFromEachRound)
-                                             .ToList()
-                                       : populationWithFitness
-                                             .Where(x => x.Fitness <= previousBestFitness)
-                                             .Where(x => !previousBestLookup.Contains(x.Genes))
-                                             .Take(UseFastSearch ? MaxImprovmentsToKeepFromEachRound : GaPopsize)
-                                             .ToList();
+                uint worstFitness = previousBests[previousBests.Count / 2].Fitness;
+                var newSequences = populationWithFitness
+                    .Take(UseFastSearch && i < 20 ? GaPopsize / 10 : GaPopsize)
+                    .Where(x => x.Fitness <= worstFitness)
+                    .Where(x => !previousBestLookup.Contains(x.Genes))
+                    .Take(UseFastSearch ? MaxImprovmentsToKeepFromEachRound : GaPopsize)
+                    .ToList();
 
                 if (newSequences.Any())
                 {
                     SortByFitness(newSequences);
-                    if (!previousBests.Any() || newSequences.First().Fitness < previousBests.First().Fitness)
+                    if (newSequences.First().Fitness < previousBests.First().Fitness)
                     {
                         UpdateChildCreationTypePercentages(newSequences.First());
                         PrintBest(generation, newSequences.First());
@@ -287,7 +257,7 @@ namespace Scratch.GeneticAlgorithm
                     break;
                 }
 
-                CreateNextGeneration(numberOfGenesToUse, population, spare, getRandomGene, previousBests, possibleGenes);
+                CreateNextGeneration(numberOfGenesToUse, population, spare, getRandomGene, previousBests);
                 var temp = spare;
                 spare = population;
                 population = temp;
@@ -356,20 +326,39 @@ namespace Scratch.GeneticAlgorithm
             return child;
         }
 
+        private static GeneSequence SwapTwoGenes(int numberOfGenesToUse, IList<GeneSequence> parents)
+        {
+            var parent = parents[Random.Next(parents.Count)];
+            int pointA = Random.Next(numberOfGenesToUse);
+            int pointB = Random.Next(numberOfGenesToUse);
+
+            var genes = parent.Genes.ToCharArray();
+            char temp = genes[pointA];
+            genes[pointA] = genes[pointB];
+            genes[pointB] = temp;
+
+            var child = new GeneSequence(new String(genes), Int32.MaxValue)
+                {
+                    HowCreated = ChildCreationTypeDescription.Swap
+                };
+
+            return child;
+        }
+
         private void UpdateChildCreationTypePercentages(GeneSequence geneSequence)
         {
             string howCreated = geneSequence.HowCreated;
             if (howCreated != ChildCreationTypeDescription.Mutation &&
                 howCreated != ChildCreationTypeDescription.Splice &&
                 howCreated != ChildCreationTypeDescription.Crossover &&
-                howCreated != ChildCreationTypeDescription.ActiveFill)
+                howCreated != ChildCreationTypeDescription.Swap)
             {
                 return;
             }
             bool reduceMutation = false;
             bool reduceSplice = false;
             bool reduceCrossover = false;
-            bool reduceActiveFill = false;
+            bool reduceSwap = false;
 
             int changeCount = 0;
             if (howCreated != ChildCreationTypeDescription.Mutation && _mutationPercentage > MinMutationPercentage)
@@ -387,10 +376,10 @@ namespace Scratch.GeneticAlgorithm
                 changeCount++;
                 reduceCrossover = true;
             }
-            if (howCreated != ChildCreationTypeDescription.ActiveFill && _activeFillPercentage > MinActiveFillPercentage)
+            if (howCreated != ChildCreationTypeDescription.Swap && _swapPercentage > MinSwapPercentage)
             {
                 changeCount++;
-                reduceActiveFill = true;
+                reduceSwap = true;
             }
 
             if (changeCount == 0)
@@ -420,11 +409,11 @@ namespace Scratch.GeneticAlgorithm
                     changedCount = true;
                     reduceCrossover = false;
                 }
-                if (reduceActiveFill && (_activeFillPercentage - ChildCreationTypeStep / changeCount) < MinActiveFillPercentage)
+                if (reduceSwap && (_swapPercentage - ChildCreationTypeStep / changeCount) < MinSwapPercentage)
                 {
                     changeCount--;
                     changedCount = true;
-                    reduceActiveFill = false;
+                    reduceSwap = false;
                 }
             } while (changedCount);
 
@@ -468,16 +457,16 @@ namespace Scratch.GeneticAlgorithm
             {
                 _crossoverPercentage += ChildCreationTypeStep;
             }
-            if (howCreated != ChildCreationTypeDescription.ActiveFill)
+            if (howCreated != ChildCreationTypeDescription.Swap)
             {
-                if (reduceActiveFill)
+                if (reduceSwap)
                 {
-                    _activeFillPercentage -= amountToRemove;
+                    _swapPercentage -= amountToRemove;
                 }
             }
             else
             {
-                _activeFillPercentage += ChildCreationTypeStep;
+                _swapPercentage += ChildCreationTypeStep;
             }
 
             if (DisplayHowCreatedPercentages && Random.Next(7) == 0)
@@ -485,17 +474,17 @@ namespace Scratch.GeneticAlgorithm
                 Console.WriteLine("> " + ChildCreationTypeDescription.Splice + " " + Math.Round(_splicePercentage, 1)
                                   + " " + ChildCreationTypeDescription.Crossover + " " + Math.Round(_crossoverPercentage, 1)
                                   + " " + ChildCreationTypeDescription.Mutation + " " + Math.Round(_mutationPercentage, 1)
-                                  + " " + ChildCreationTypeDescription.ActiveFill + " " + Math.Round(_activeFillPercentage, 1));
+                                  + " " + ChildCreationTypeDescription.Swap + " " + Math.Round(_swapPercentage, 1));
             }
         }
 
         private static class ChildCreationTypeDescription
         {
-            public const string ActiveFill = "Active Fill";
             public const string Crossover = "Crossover";
             public const string Mutation = "Mutation";
             public const string Random = "Random";
             public const string Splice = "Splice";
+            public const string Swap = "Swap";
         }
     }
 }
