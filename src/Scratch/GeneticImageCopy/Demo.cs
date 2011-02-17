@@ -31,14 +31,6 @@ namespace Scratch.GeneticImageCopy
 
         [Test]
         [Explicit]
-        public void Draw_Monalisa_190x200_with_500_circles()
-        {
-            const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
-            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 500);
-        }
-        
-        [Test]
-        [Explicit]
         public void Draw_Monalisa_190x200_with_150_circles()
         {
             const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
@@ -61,14 +53,17 @@ namespace Scratch.GeneticImageCopy
             GeneticallyDuplicateWithShape<Triangle>(fileNameWithPath, 50);
         }
 
-        private static void Display<T>(int generation, uint fitness, string genes, int shapeSizeInBytes, int width, int height, string howCreated, int max, Bitmap targetImage, Stopwatch timer) where T : IShape
+        private static void Display<T>(int generation, uint fitness, string genes, int shapeSizeInBytes, string howCreated, int max, Bitmap targetImage, Stopwatch timer) where T : IShape
         {
+            int width = targetImage.Width;
+            int height = targetImage.Height;
+
             decimal percentage = Math.Round(((max - fitness * 1m) / max) * 100m, 2);
             if (percentage != _previousPercentage)
             {
                 _previousPercentage = percentage;
                 Console.WriteLine("Generation " + generation + " fitness " + fitness + " by " + howCreated + " = " + percentage + "% match");
-                using (var generatedBitmap = GenesToBitmap<T>(genes, shapeSizeInBytes, width, height))
+                using (var generatedBitmap = GenesToBitmap<T>(genes, shapeSizeInBytes, width, height, targetImage.PixelFormat))
                 {
                     using (var combined = new Bitmap(2 * width, 20 + height))
                     {
@@ -94,7 +89,7 @@ namespace Scratch.GeneticImageCopy
             }
         }
 
-        private static Bitmap GenesToBitmap<T>(string genes, int shapeSizeInBytes, int bitmapWidth, int bitmapHeight)
+        private static Bitmap GenesToBitmap<T>(string genes, int shapeSizeInBytes, int bitmapWidth, int bitmapHeight, PixelFormat pixelFormat)
             where T : IShape
         {
             if ((genes.Length & 1) == 1)
@@ -109,14 +104,15 @@ namespace Scratch.GeneticImageCopy
                 shapes.Add(shape);
             }
 
-            var temp = new Bitmap(bitmapWidth, bitmapHeight, PixelFormat.Format24bppRgb);
+            var temp = new Bitmap(bitmapWidth, bitmapHeight, pixelFormat);
             using (var graphics = Graphics.FromImage(temp))
             {
                 foreach (var shape in shapes)
                 {
-                    shape.Draw(graphics);
+                    shape.Draw(graphics, 0, 0);
                 }
             }
+
             return temp;
         }
 
@@ -140,7 +136,7 @@ namespace Scratch.GeneticImageCopy
             int shapeSizeInBytes = (int)typeof(T).GetMethod("GetEncodingSizeInBytes", BindingFlags.Static | BindingFlags.Public).Invoke(null, new[] { width, (object)height });
             Func<string, uint> calcFitness = x =>
                 {
-                    using (var temp = GenesToBitmap<T>(x, shapeSizeInBytes, width, height))
+                    using (var temp = GenesToBitmap<T>(x, shapeSizeInBytes, width, height, targetImage.PixelFormat))
                     {
                         byte[] tempBytes;
                         using (var stream = new MemoryStream())
@@ -161,20 +157,20 @@ namespace Scratch.GeneticImageCopy
                 {
                     UseFastSearch = true,
                     DisplayHowCreatedPercentages = true,
-                    DisplayGenes = (generation, fitness, genes, howCreated) => Display<T>(generation, fitness, genes, shapeSizeInBytes, width, height, howCreated, max, targetImage, timer)
+                    DisplayGenes = (generation, fitness, genes, howCreated) => Display<T>(generation, fitness, genes, shapeSizeInBytes, howCreated, max, targetImage, timer)
                 };
             solver.GetBestGenetically(numberOfShapes * shapeSizeInBytes, "0123456789ABCDEF", calcFitness, true);
         }
 
         public static void Main()
         {
-            new Demo().Draw_Monalisa_190x200_with_500_circles();
+            new Demo().Draw_Monalisa_190x200_with_150_circles();
         }
     }
 
     public interface IShape
     {
-        void Draw(Graphics graphics);
+        void Draw(Graphics graphics, int offsetX, int offsetY);
     }
 
     public abstract class Shape
@@ -226,9 +222,12 @@ namespace Scratch.GeneticImageCopy
         {
         }
 
-        public void Draw(Graphics graphics)
+        public void Draw(Graphics graphics, int offsetX, int offsetY)
         {
-            graphics.FillPolygon(new SolidBrush(Color), Points);
+            int avgX = (int)Points.Average(x => x.X);
+            int avgY = (int)Points.Average(x => x.Y);
+            var offsetPoints = Points.Select(x => new Point(x.X + offsetX - avgX, x.Y + offsetY - avgY)).ToArray();
+            graphics.FillPolygon(new SolidBrush(Color), offsetPoints);
         }
 
         public static int GetEncodingSizeInBytes(int imageWidth, int imageHeight)
@@ -246,9 +245,10 @@ namespace Scratch.GeneticImageCopy
         {
         }
 
-        public void Draw(Graphics graphics)
+        public void Draw(Graphics graphics, int offsetX, int offsetY)
         {
-            graphics.DrawLine(new Pen(Color), Points[0], Points[1]);
+            var offsetPoints = Points.Select(x => new Point(x.X + offsetX, x.Y + offsetY)).ToArray();
+            graphics.DrawLine(new Pen(Color), offsetPoints[0], offsetPoints[1]);
         }
 
         public static int GetEncodingSizeInBytes(int imageWidth, int imageHeight)
@@ -266,9 +266,10 @@ namespace Scratch.GeneticImageCopy
         {
         }
 
-        public void Draw(Graphics graphics)
+        public void Draw(Graphics graphics, int offsetX, int offsetY)
         {
-            graphics.FillEllipse(new SolidBrush(Color), Points[0].X, Points[0].Y, Points[1].X, Points[1].Y);
+            var offsetPoints = Points.Select(x => new Point(x.X + offsetX, x.Y + offsetY)).ToArray();
+            graphics.FillEllipse(new SolidBrush(Color), offsetPoints[0].X - Points[1].X / 2, offsetPoints[0].Y - Points[1].Y / 2, Points[1].X, Points[1].Y);
         }
 
         public static int GetEncodingSizeInBytes(int imageWidth, int imageHeight)
@@ -286,9 +287,11 @@ namespace Scratch.GeneticImageCopy
         {
         }
 
-        public void Draw(Graphics graphics)
+        public void Draw(Graphics graphics, int offsetX, int offsetY)
         {
-            graphics.FillEllipse(new SolidBrush(Color), Points[0].X, Points[0].Y, Points[1].X, Points[1].X);
+            var offsetPoints = Points.Select(x => new Point(x.X + offsetX, x.Y + offsetY)).ToArray();
+            int centerOfCircleAdjustment = Points[1].X / 2;
+            graphics.FillEllipse(new SolidBrush(Color), offsetPoints[0].X - centerOfCircleAdjustment, offsetPoints[0].Y - centerOfCircleAdjustment, Points[1].X, Points[1].X);
         }
 
         public static int GetEncodingSizeInBytes(int imageWidth, int imageHeight)
