@@ -23,7 +23,7 @@ namespace Scratch.RegexFromSamples
 	///     http://stackoverflow.com/questions/4880402/how-to-auto-generate-regex-from-given-list-of-strings
 	/// </summary>
 	[TestFixture]
-	public class Tests
+	public class Demo
 	{
 		[Test]
 		public void Given_Sample_A()

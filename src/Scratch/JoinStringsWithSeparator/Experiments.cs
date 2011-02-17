@@ -22,7 +22,7 @@ namespace Scratch.JoinStringsWithSeparator
     /// http://stackoverflow.com/questions/853137/adding-a-separator-to-a-list-of-items-for-display/853812#853812
     /// </summary>
     [TestFixture]
-    public class Tests
+    public class Experiments
     {
         /// <summary>
         /// 00:00:00.0066368    True    StringJoin

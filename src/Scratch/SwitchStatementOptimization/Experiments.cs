@@ -21,7 +21,7 @@ namespace Scratch.SwitchStatementOptimization
     /// http://stackoverflow.com/questions/1837546/how-would-you-make-this-switch-statement-as-fast-as-possible
     /// </summary>
     [TestFixture]
-    public class Tests
+    public class Experiments
     {
         private readonly string[] _allCodes = new[] { "", "A", "B", "BT", "C", "MW", "N", "PA", "Q", "QD", "W", "X", "Y", null };
         private List<string> _codes;

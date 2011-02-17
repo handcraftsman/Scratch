@@ -23,7 +23,7 @@ namespace Scratch.MaximizeCharacters
 	///     http://stackoverflow.com/questions/4606984/maximum-number-of-characters-using-keystrokes-a-cttrla-ctrlc-and-ctrlv
 	/// </summary>
 	[TestFixture]
-	public class Tests
+	public class Demo
 	{
 		[Test]
 		public void Find_best_with_10_characters()

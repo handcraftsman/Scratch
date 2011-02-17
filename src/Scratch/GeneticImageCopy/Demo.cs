@@ -25,10 +25,18 @@ using Scratch.GeneticAlgorithm;
 namespace Scratch.GeneticImageCopy
 {
     [TestFixture]
-    public class Tests
+    public class Demo
     {
         private static decimal _previousPercentage;
 
+        [Test]
+        [Explicit]
+        public void Draw_Monalisa_190x200_with_500_circles()
+        {
+            const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
+            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 500);
+        }
+        
         [Test]
         [Explicit]
         public void Draw_Monalisa_190x200_with_150_circles()
@@ -160,7 +168,7 @@ namespace Scratch.GeneticImageCopy
 
         public static void Main()
         {
-            new Tests().Draw_Monalisa_190x200_with_150_circles();
+            new Demo().Draw_Monalisa_190x200_with_500_circles();
         }
     }
 

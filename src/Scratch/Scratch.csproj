@@ -76,15 +76,16 @@
     <Compile Include="ConvertHexStringToBytes\StringExtensions.cs" />
     <Compile Include="ConvertHexStringToBytes\Tests.cs" />
     <Compile Include="FastCurrentDateTime\SystemService.cs" />
-    <Compile Include="FileFtp\FtpTests.cs" />
+    <Compile Include="FileFtp\FtpDemo.cs" />
     <Compile Include="FindOutOfOrderListItems\IEnumerableTExtensions.cs" />
     <Compile Include="FindOutOfOrderListItems\Tests.cs" />
     <Compile Include="GeneticAlgorithm\GeneticSolver.cs" />
-    <Compile Include="GeneticAlgorithm\Tests.cs" />
-    <Compile Include="GeneticImageCopy\Tests.cs" />
+    <Compile Include="GeneticAlgorithm\Demo.cs" />
+    <Compile Include="GeneticImageCopy\Demo.cs" />
+    <Compile Include="LinqToListBehavior\IEnumerableTExtensions.cs" />
     <Compile Include="LinqToListBehavior\Tests.cs" />
     <Compile Include="ListPermutation\NumericTests.cs" />
-    <Compile Include="MaximizeCharacters\Tests.cs">
+    <Compile Include="MaximizeCharacters\Demo.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="PowersOf2\Tests.cs" />
@@ -97,7 +98,7 @@
     <Compile Include="FindSmallestWindowContainingAllElements\Lists.cs" />
     <Compile Include="FindSmallestWindowContainingAllElements\Tests.cs" />
     <Compile Include="JoinStringsWithSeparator\IEnumerableTExtensions.cs" />
-    <Compile Include="JoinStringsWithSeparator\Tests.cs" />
+    <Compile Include="JoinStringsWithSeparator\Experiments.cs" />
     <Compile Include="ListPermutation\IListExtensions.cs" />
     <Compile Include="ListPermutation\IListExtensionsTests.cs" />
     <Compile Include="ListPermutation\Numeric.cs" />
@@ -113,7 +114,7 @@
     <Compile Include="Ranges\MergeRanges\Tests.cs" />
     <Compile Include="Ranges\RangeEnumeration\Pair.cs" />
     <Compile Include="Ranges\RangeEnumeration\Tests.cs" />
-    <Compile Include="RegexFromSamples\Tests.cs" />
+    <Compile Include="RegexFromSamples\Demo.cs" />
     <Compile Include="ShuffleIEnumerable\IEnumerableExtensions.cs" />
     <Compile Include="SkipLastElementInEnumerable\IEnumerableTExtensions.cs" />
     <Compile Include="SkipLastElementInEnumerable\Tests.cs" />
@@ -123,7 +124,7 @@
     <Compile Include="StringSearching\Tests.cs" />
     <Compile Include="SumValuesOfTwoLists\Numeric.cs" />
     <Compile Include="SumValuesOfTwoLists\Tests.cs" />
-    <Compile Include="SwitchStatementOptimization\Tests.cs" />
+    <Compile Include="SwitchStatementOptimization\Experiments.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="GeneticImageCopy\monalisa.jpg" />

@@ -20,7 +20,7 @@ namespace Scratch.FileFtp
     /// http://stackoverflow.com/questions/3622718/multiple-files-downloading-using-ftp-crash-only-on-runtimenot-debuging
     /// </summary>
     [TestFixture]
-    public class FtpTests
+    public class FtpDemo
     {
         [Test]
         public void Show()

@@ -37,7 +37,7 @@ namespace Scratch.GeneticAlgorithm
     ///     Generation   287 best: Hello world! (0)
     /// </summary>
     [TestFixture]
-    public class Tests
+    public class Demo
     {
         [Test]
         public void Hello_World()
