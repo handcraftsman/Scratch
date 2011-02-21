@@ -31,26 +31,19 @@ namespace Scratch.GeneticImageCopy
 
         [Test]
         [Explicit]
-        public void Draw_Monalisa_190x200_with_150_circles()
+        public void Draw_with_circles()
         {
             const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
-            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 150);
+            DeletePreviousImages();
+            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 300);
         }
 
-        [Test]
-        [Explicit]
-        public void Draw_Monalisa_190x200_with_50_circles()
+        private static void DeletePreviousImages()
         {
-            const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
-            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 50);
-        }
-
-        [Test]
-        [Explicit]
-        public void Draw_Monalisa_190x200_with_50_triangles()
-        {
-            const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
-            GeneticallyDuplicateWithShape<Triangle>(fileNameWithPath, 50);
+            foreach(var file in Directory.GetFiles(".","image_*.jpg"))
+            {
+                File.Delete(file);
+            }
         }
 
         private static void Display<T>(int generation, uint fitness, string genes, int shapeSizeInBytes, string howCreated, int max, Bitmap targetImage, Stopwatch timer) where T : IShape
@@ -59,32 +52,37 @@ namespace Scratch.GeneticImageCopy
             int height = targetImage.Height;
 
             decimal percentage = Math.Round(((max - fitness * 1m) / max) * 100m, 2);
-            if (percentage != _previousPercentage)
+            string filename = "image_" + generation + ".jpg";
+            if (percentage == _previousPercentage)
+            {
+                filename = "final.jpg";
+            }
+            else
             {
                 _previousPercentage = percentage;
                 Console.WriteLine("Generation " + generation + " fitness " + fitness + " by " + howCreated + " = " + percentage + "% match");
-                using (var generatedBitmap = GenesToBitmap<T>(genes, shapeSizeInBytes, width, height, targetImage.PixelFormat))
+                File.Delete("final.jpg");
+            }
+            using (var generatedBitmap = GenesToBitmap<T>(genes, shapeSizeInBytes, width, height, targetImage.PixelFormat))
+            {
+                using (var combined = new Bitmap(2 * width, 20 + height))
                 {
-                    using (var combined = new Bitmap(2 * width, 20 + height))
+                    using (var graphics = Graphics.FromImage(combined))
                     {
-                        using (var graphics = Graphics.FromImage(combined))
+                        for (int i = 0; i < width; i++)
                         {
-                            for (int i = 0; i < width; i++)
+                            for (int j = 0; j < height; j++)
                             {
-                                for (int j = 0; j < height; j++)
-                                {
-                                    combined.SetPixel(i, j, generatedBitmap.GetPixel(i, j));
-                                    combined.SetPixel(width + i, j, targetImage.GetPixel(i, j));
-                                }
+                                combined.SetPixel(i, j, generatedBitmap.GetPixel(i, j));
+                                combined.SetPixel(width + i, j, targetImage.GetPixel(i, j));
                             }
-
-                            graphics.FillRectangle(Brushes.White, 0, height, 2 * width, 20);
-                            graphics.DrawString("Generation " + generation.ToString().PadRight(10) + percentage.ToString().PadLeft(5) + "%    elapsed: " + timer.Elapsed, new Font("Times New Roman", 12), Brushes.Black, 2, height + 1);
                         }
 
-                        string filename = "image_" + generation + ".jpg";
-                        combined.Save(filename);
+                        graphics.FillRectangle(Brushes.White, 0, height, 2 * width, 20);
+                        graphics.DrawString("Generation " + generation.ToString().PadRight(10) + percentage.ToString().PadLeft(5) + "%    elapsed: " + timer.Elapsed, new Font("Times New Roman", 12), Brushes.Black, 2, height + 1);
                     }
+
+                    combined.Save(filename);
                 }
             }
         }
@@ -155,6 +153,7 @@ namespace Scratch.GeneticImageCopy
             int max = bitmapBytes.Length * 255;
             var solver = new GeneticSolver(2000)
                 {
+                    NumberOfGenesInUnitOfMeaning = shapeSizeInBytes,
                     UseFastSearch = true,
                     DisplayHowCreatedPercentages = true,
                     DisplayGenes = (generation, fitness, genes, howCreated) => Display<T>(generation, fitness, genes, shapeSizeInBytes, howCreated, max, targetImage, timer)
@@ -164,7 +163,7 @@ namespace Scratch.GeneticImageCopy
 
         public static void Main()
         {
-            new Demo().Draw_Monalisa_190x200_with_150_circles();
+            new Demo().Draw_with_circles();
         }
     }
 
@@ -191,8 +190,8 @@ namespace Scratch.GeneticImageCopy
                     bitmapOffset |= bytes[byteOffset];
                 }
                 bitmapOffset = Math.Abs(bitmapOffset) % (bitmapWidth * bitmapHeight);
-                int x = bitmapOffset / bitmapWidth;
-                int y = bitmapOffset % bitmapWidth;
+                int y = bitmapOffset / bitmapWidth;
+                int x = bitmapOffset % bitmapWidth;
                 points.Add(new Point(x, y));
             }
 
