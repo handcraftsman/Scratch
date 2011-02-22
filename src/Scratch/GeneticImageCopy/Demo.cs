@@ -16,6 +16,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 using NUnit.Framework;
 
@@ -38,9 +39,38 @@ namespace Scratch.GeneticImageCopy
             GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 300);
         }
 
+        private static uint CalcFitness(byte[] tempBytes, byte[] bitmapBytes)
+        {
+            int len = tempBytes.Length;
+            int sum = 0;
+            unsafe
+            {
+                fixed (byte* tempPtr = tempBytes, bitmapPtr = bitmapBytes)
+                {
+                    byte* ap2 = tempPtr, bp2 = bitmapPtr;
+                    for (; len > 0; len--)
+                    {
+                        if (*ap2 > *bp2)
+                        {
+                            sum += (*ap2 - *bp2);
+                        }
+                        else
+                        {
+                            sum += (*bp2 - *ap2);
+                        }
+
+                        ap2++;
+                        bp2++;
+                    }
+                }
+            }
+
+            return (uint)sum;
+        }
+
         private static void DeletePreviousImages()
         {
-            foreach(var file in Directory.GetFiles(".","image_*.jpg"))
+            foreach (string file in Directory.GetFiles(".", "image_*.jpg"))
             {
                 File.Delete(file);
             }
@@ -118,15 +148,10 @@ namespace Scratch.GeneticImageCopy
             where T : IShape
         {
             _previousPercentage = 100;
-            byte[] bitmapBytes;
             var targetImage = new Bitmap(fileNameWithPath);
             int width = targetImage.Width;
             int height = targetImage.Height;
-            using (var stream = new MemoryStream())
-            {
-                targetImage.Save(stream, ImageFormat.Bmp);
-                bitmapBytes = stream.ToArray();
-            }
+            var bitmapBytes = GetBytesFromBitmap(targetImage);
             var timer = new Stopwatch();
             timer.Start();
 
@@ -136,15 +161,9 @@ namespace Scratch.GeneticImageCopy
                 {
                     using (var temp = GenesToBitmap<T>(x, shapeSizeInBytes, width, height, targetImage.PixelFormat))
                     {
-                        byte[] tempBytes;
-                        using (var stream = new MemoryStream())
-                        {
-                            temp.Save(stream, ImageFormat.Bmp);
-                            tempBytes = stream.ToArray();
-                        }
+                        var tempBytes = GetBytesFromBitmap(temp);
 
-                        uint fitness = (uint)Enumerable.Range(0, tempBytes.Length)
-                                                 .Sum(i => Math.Abs(tempBytes[i] - bitmapBytes[i]));
+                        uint fitness = CalcFitness(tempBytes, bitmapBytes);
 
                         return fitness;
                     }
@@ -159,6 +178,24 @@ namespace Scratch.GeneticImageCopy
                     DisplayGenes = (generation, fitness, genes, howCreated) => Display<T>(generation, fitness, genes, shapeSizeInBytes, howCreated, max, targetImage, timer)
                 };
             solver.GetBestGenetically(numberOfShapes * shapeSizeInBytes, "0123456789ABCDEF", calcFitness, true);
+        }
+
+        private static byte[] GetBytesFromBitmap(Bitmap bitmap)
+        {
+            var rectangle = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+            var bData = bitmap.LockBits(rectangle, ImageLockMode.ReadWrite, bitmap.PixelFormat);
+            byte[] data;
+            try
+            {
+                int size = bData.Stride * bData.Height;
+                data = new byte[size];
+                Marshal.Copy(bData.Scan0, data, 0, size);
+            }
+            finally
+            {
+                bitmap.UnlockBits(bData);
+            }
+            return data;
         }
 
         public static void Main()

@@ -131,10 +131,6 @@ namespace Scratch.GeneticAlgorithm
 
         private void GenerateChildren(int numberOfGenesToUse, IList<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene)
         {
-//            double avgFitness = population.Average(x => x.Fitness);
-//            int avgFitnessPoint = population.TakeWhile(x => x.Fitness <= avgFitness).Count();
-//            int parentCutoff = Math.Max(10, Math.Min(avgFitnessPoint, MinGaPopSize));
-
             var unique = new HashSet<string>();
             var parents = population.Where(x => unique.Add(x.Genes)).Take(50).ToList();
             for (int i = 0; i < RandomCitizenCount; i++)
@@ -186,7 +182,6 @@ namespace Scratch.GeneticAlgorithm
                     .Where(x => x.Fitness <= worstFitness)
                     .Where(x => previousBestLookup.Add(x.Genes))
                     .Take(UseFastSearch ? MaxImprovmentsToKeepFromEachRound : (int)((1-_slidingMutationRate)*GaPopsize))
-//                    .Take(UseFastSearch ? MaxImprovmentsToKeepFromEachRound : GaPopsize)
                     .ToList();
 
                 if (newSequences.Any())
@@ -237,7 +232,6 @@ namespace Scratch.GeneticAlgorithm
                 .ToList();
             int adjustedPreviousBestsCount = previousBests.Count 
                                              + (_childGenerationStrategies.Count - strategiesInUse.Count) * minimumStrategyPercentageValue;
-//                    minimumStrategyPercentageValue = (int)Math.Ceiling(MinimumStrategyPercentage / 100m * adjustedPreviousBestsCount);
 
             foreach (var strategy in _childGenerationStrategies)
             {
@@ -265,7 +259,7 @@ namespace Scratch.GeneticAlgorithm
 
             if (generation%100 == 0)
             {
-                var strategyPercentages = _childGenerationStrategies.Select(x => x.Second.Description + " " + Math.Round(x.First, 2)).ToArray();
+                var strategyPercentages = _childGenerationStrategies.Select(x => x.Second.Description + " " + (x.First < 10 ? " " : "") + Math.Round(x.First, 1).ToString().PadRight(x.First < 10 ? 3 : 4)).ToArray();
                 Console.WriteLine("% " + String.Join(" ", strategyPercentages));
             }
         }
