@@ -72,7 +72,7 @@ namespace Scratch.RegexFromSamples
 			int targetGeneLength = 1;
 			for (;;)
 			{
-				string best = new GeneticSolver(50+10*targetGeneLength).GetBestGenetically(targetGeneLength, genes, calcFitness, true);
+				string best = new GeneticSolver(50+10*targetGeneLength).GetBestGenetically(targetGeneLength, genes, calcFitness);
 				if (calcFitness(best) != 0)
 				{
 					Console.WriteLine("-- not solved with regex of length " + targetGeneLength);

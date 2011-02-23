@@ -91,7 +91,15 @@
     <Compile Include="GeneticAlgorithm\Strategies\RandomGenes.cs" />
     <Compile Include="GeneticAlgorithm\Strategies\Splice.cs" />
     <Compile Include="GeneticAlgorithm\Strategies\Swap.cs" />
+    <Compile Include="GeneticImageCopy\BitmapExtensions.cs" />
+    <Compile Include="GeneticImageCopy\BitmapExtensionsTests.cs" />
+    <Compile Include="GeneticImageCopy\Circle.cs" />
     <Compile Include="GeneticImageCopy\Demo.cs" />
+    <Compile Include="GeneticImageCopy\Ellipse.cs" />
+    <Compile Include="GeneticImageCopy\IShape.cs" />
+    <Compile Include="GeneticImageCopy\Line.cs" />
+    <Compile Include="GeneticImageCopy\Shape.cs" />
+    <Compile Include="GeneticImageCopy\Triangle.cs" />
     <Compile Include="LinqToListBehavior\IEnumerableTExtensions.cs" />
     <Compile Include="LinqToListBehavior\Tests.cs" />
     <Compile Include="ListPermutation\NumericTests.cs" />

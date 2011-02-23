@@ -35,7 +35,8 @@ namespace Scratch.GeneticAlgorithm
         private readonly int _gaMaxGenerationsWithoutImprovement = DefaultMaxGenerationsWithoutImprovement;
         private readonly IChildGenerationStrategy _randomStrategy;
         private int _numberOfGenesInUnitOfMeaning = 1;
-        private Random _random = new Random();
+        private Random _random;
+        private int _randomSeed;
         private const int MinimumStrategyPercentage = 2;
 
         public GeneticSolver()
@@ -78,9 +79,10 @@ namespace Scratch.GeneticAlgorithm
         }
         public int RandomSeed
         {
-            set { _random = new Random(value); }
+            set { _randomSeed = value; }
         }
         public bool UseFastSearch { get; set; }
+        public bool UseHillClimbing { get; set; }
 
         private static IEnumerable<GeneSequence> CalcFitness(IList<GeneSequence> population, Func<string, uint> calcDistanceFromTarget)
         {
@@ -153,14 +155,18 @@ namespace Scratch.GeneticAlgorithm
             }
         }
 
-        public string GetBestGenetically(int numberOfGenesToUse, string possibleGenes, Func<string, uint> calcFitness, bool orderMatters)
+        public string GetBestGenetically(int numberOfGenesToUse, string possibleGenes, Func<string, uint> calcFitness)
         {
+            var seed = _randomSeed != 0 ?_randomSeed : (int)DateTime.Now.Ticks;
+            Console.WriteLine("using random seed: " + seed);
+            _random = new Random(seed);
+
             var popAlpha = new List<GeneSequence>(GaPopsize);
             var popBeta = new List<GeneSequence>(GaPopsize);
 
             Func<char> getRandomGene = () => possibleGenes[_random.Next(possibleGenes.Length)];
 
-            InitPopulation(numberOfGenesToUse, popAlpha, popBeta, getRandomGene);
+            InitPopulation(UseHillClimbing ? NumberOfGenesInUnitOfMeaning : numberOfGenesToUse, popAlpha, popBeta, getRandomGene);
             var population = popAlpha;
             var spare = popBeta;
             var previousBests = new List<GeneSequence>
@@ -168,9 +174,40 @@ namespace Scratch.GeneticAlgorithm
                     population.First()
                 };
             previousBests[0].Fitness = calcFitness(previousBests[0].Genes);
-            _slidingMutationRate = DefaultMutationRate;
             int generation = 0;
-            for (int i = 0; i < _gaMaxGenerationsWithoutImprovement; i++, generation++)
+
+            if (UseHillClimbing)
+            {
+                for (int i = NumberOfGenesInUnitOfMeaning; i < numberOfGenesToUse - 1; i+=NumberOfGenesInUnitOfMeaning)
+                {
+                    GetBestGenetically(i, getRandomGene, 30, previousBests, population, spare, calcFitness, ref generation);
+                    var incrementalBest = previousBests.First();
+                    InitPopulation(i + NumberOfGenesInUnitOfMeaning, population, spare, getRandomGene);
+                    previousBests.Clear();
+                    for (int j = 0; j < 20; j++)
+                    {
+                        var random = _randomStrategy.Generate(null, NumberOfGenesInUnitOfMeaning, getRandomGene, NumberOfGenesInUnitOfMeaning, _slidingMutationRate, _random.Next);
+                        var newChild = incrementalBest.Clone();
+                        newChild.Genes = random.Genes + newChild.Genes;
+
+                        previousBests.Add(newChild);
+                        previousBests[j].Fitness = calcFitness(previousBests[j].Genes);
+                        population[j] = newChild;
+                        spare[j] = newChild.Clone();
+                    }
+                    var count = 1 + (i / NumberOfGenesInUnitOfMeaning);
+                    Console.WriteLine("> " + count);
+                }
+            }
+
+            var best = GetBestGenetically(numberOfGenesToUse, getRandomGene, _gaMaxGenerationsWithoutImprovement, previousBests, population, spare, calcFitness, ref generation);
+            return best;
+        }
+
+        private string GetBestGenetically(int numberOfGenesToUse, Func<char> getRandomGene, int maxGenerationsWithoutImprovement, List<GeneSequence> previousBests, List<GeneSequence> population, List<GeneSequence> spare, Func<string, uint> calcFitness, ref int generation)
+        {
+            _slidingMutationRate = DefaultMutationRate;
+            for (int i = 0; i < maxGenerationsWithoutImprovement; i++, generation++)
             {
                 var previousBestLookup = new HashSet<string>(previousBests.Select(x => x.Genes));
                 var populationWithFitness = CalcFitness(population, calcFitness);
@@ -266,6 +303,8 @@ namespace Scratch.GeneticAlgorithm
 
         private void InitPopulation(int numberOfGenesToUse, ICollection<GeneSequence> population, List<GeneSequence> buffer, Func<char> getRandomGene)
         {
+            population.Clear();
+            buffer.Clear();
             for (int i = 0; i < GaPopsize; i++)
             {
                 population.Add(_randomStrategy.Generate(null, numberOfGenesToUse, getRandomGene, NumberOfGenesInUnitOfMeaning, _slidingMutationRate, _random.Next));

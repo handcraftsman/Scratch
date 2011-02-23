@@ -40,10 +40,10 @@ namespace Scratch.GeneticAlgorithm.Strategies
             string parentB = parents[i2].Genes;
             var childGenes = parentA.ToArray();
 
-            int numberOfGenesToCross = (int)(numberOfGenesToUse * slidingMutationRate);
+            int numberOfGenesToCross = Math.Min(5,(int)(numberOfGenesToUse * slidingMutationRate));
             if (numberOfGenesInUnitOfMeaning == 1 || getRandomInt(2) == 0)
             {
-//                for (int j = 0; j < numberOfGenesToCross; j++)
+                for (int j = 0; j < numberOfGenesToCross; j++)
                 {
                     int index0 = getRandomInt(numberOfGenesToUse);
                     childGenes[index0] = parentB[index0];

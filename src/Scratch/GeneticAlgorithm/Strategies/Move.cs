@@ -34,6 +34,10 @@ namespace Scratch.GeneticAlgorithm.Strategies
 
             var indexes = Enumerable.Range(0, numberOfGenesToUse / numberOfGenesInUnitOfMeaning)
                 .Shuffle().Take(2).ToArray();
+            if (indexes.Length == 1)
+            {
+                return parent;
+            }
             int sourceIndex = indexes.First() * numberOfGenesInUnitOfMeaning;
             int targetIndex = indexes.Last() * numberOfGenesInUnitOfMeaning;
 

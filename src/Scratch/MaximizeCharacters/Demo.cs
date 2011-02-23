@@ -120,7 +120,7 @@ namespace Scratch.MaximizeCharacters
 		        {
 		            UseFastSearch = true
 		        };
-		    string best = geneticSolver.GetBestGenetically(numberOfCharacters, "ASCP", calcFitness, true);
+		    string best = geneticSolver.GetBestGenetically(numberOfCharacters, "ASCP", calcFitness);
 			string finalString = Run(best);
 			Console.WriteLine(best + " generatates final string with length " + finalString.Length);
 		    finalString.Length.ShouldBeGreaterThanOrEqualTo((int)(.8m*expectedLength));

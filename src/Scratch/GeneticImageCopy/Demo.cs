@@ -16,7 +16,6 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 
 using NUnit.Framework;
 
@@ -36,7 +35,19 @@ namespace Scratch.GeneticImageCopy
         {
             const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
             DeletePreviousImages();
-            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 300);
+            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 150, true);
+        }
+
+        [Test]
+        public void Time_CalcFitness_Linq()
+        {
+            TimeCalcFitness(CalcFitnessWithLinq);
+        }
+
+        [Test]
+        public void Time_CalcFitness_Unsafe()
+        {
+            TimeCalcFitness(CalcFitness);
         }
 
         private static uint CalcFitness(byte[] tempBytes, byte[] bitmapBytes)
@@ -66,6 +77,14 @@ namespace Scratch.GeneticImageCopy
             }
 
             return (uint)sum;
+        }
+
+        private static uint CalcFitnessWithLinq(byte[] tempBytes, byte[] bitmapBytes)
+        {
+            uint fitness = (uint)Enumerable.Range(0, tempBytes.Length)
+                                     .Sum(i => Math.Abs(tempBytes[i] - bitmapBytes[i]));
+
+            return fitness;
         }
 
         private static void DeletePreviousImages()
@@ -99,14 +118,8 @@ namespace Scratch.GeneticImageCopy
                 {
                     using (var graphics = Graphics.FromImage(combined))
                     {
-                        for (int i = 0; i < width; i++)
-                        {
-                            for (int j = 0; j < height; j++)
-                            {
-                                combined.SetPixel(i, j, generatedBitmap.GetPixel(i, j));
-                                combined.SetPixel(width + i, j, targetImage.GetPixel(i, j));
-                            }
-                        }
+                        graphics.DrawImage(generatedBitmap, 0, 0, new Rectangle(0, 0, generatedBitmap.Width, generatedBitmap.Height), GraphicsUnit.Pixel);
+                        graphics.DrawImage(targetImage, generatedBitmap.Width, 0, new Rectangle(0, 0, generatedBitmap.Width, generatedBitmap.Height), GraphicsUnit.Pixel);
 
                         graphics.FillRectangle(Brushes.White, 0, height, 2 * width, 20);
                         graphics.DrawString("Generation " + generation.ToString().PadRight(10) + percentage.ToString().PadLeft(5) + "%    elapsed: " + timer.Elapsed, new Font("Times New Roman", 12), Brushes.Black, 2, height + 1);
@@ -144,14 +157,14 @@ namespace Scratch.GeneticImageCopy
             return temp;
         }
 
-        private static void GeneticallyDuplicateWithShape<T>(string fileNameWithPath, int numberOfShapes)
+        private static void GeneticallyDuplicateWithShape<T>(string fileNameWithPath, int numberOfShapes, bool useHillClimbing)
             where T : IShape
         {
             _previousPercentage = 100;
             var targetImage = new Bitmap(fileNameWithPath);
             int width = targetImage.Width;
             int height = targetImage.Height;
-            var bitmapBytes = GetBytesFromBitmap(targetImage);
+            var bitmapBytes = targetImage.GetBytesFromBitmap();
             var timer = new Stopwatch();
             timer.Start();
 
@@ -161,7 +174,7 @@ namespace Scratch.GeneticImageCopy
                 {
                     using (var temp = GenesToBitmap<T>(x, shapeSizeInBytes, width, height, targetImage.PixelFormat))
                     {
-                        var tempBytes = GetBytesFromBitmap(temp);
+                        var tempBytes = temp.GetBytesFromBitmap();
 
                         uint fitness = CalcFitness(tempBytes, bitmapBytes);
 
@@ -172,167 +185,35 @@ namespace Scratch.GeneticImageCopy
             int max = bitmapBytes.Length * 255;
             var solver = new GeneticSolver(2000)
                 {
+                    UseHillClimbing = useHillClimbing,
                     NumberOfGenesInUnitOfMeaning = shapeSizeInBytes,
                     UseFastSearch = true,
                     DisplayHowCreatedPercentages = true,
                     DisplayGenes = (generation, fitness, genes, howCreated) => Display<T>(generation, fitness, genes, shapeSizeInBytes, howCreated, max, targetImage, timer)
                 };
-            solver.GetBestGenetically(numberOfShapes * shapeSizeInBytes, "0123456789ABCDEF", calcFitness, true);
-        }
-
-        private static byte[] GetBytesFromBitmap(Bitmap bitmap)
-        {
-            var rectangle = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-            var bData = bitmap.LockBits(rectangle, ImageLockMode.ReadWrite, bitmap.PixelFormat);
-            byte[] data;
-            try
-            {
-                int size = bData.Stride * bData.Height;
-                data = new byte[size];
-                Marshal.Copy(bData.Scan0, data, 0, size);
-            }
-            finally
-            {
-                bitmap.UnlockBits(bData);
-            }
-            return data;
+            solver.GetBestGenetically(numberOfShapes * shapeSizeInBytes, "0123456789ABCDEF", calcFitness);
         }
 
         public static void Main()
         {
             new Demo().Draw_with_circles();
         }
-    }
 
-    public interface IShape
-    {
-        void Draw(Graphics graphics, int offsetX, int offsetY);
-    }
-
-    public abstract class Shape
-    {
-        protected Shape(IList<byte> bytes, int bitmapWidth, int bitmapHeight, int numberOfPoints)
+        private static void TimeCalcFitness(Func<byte[], byte[], uint> calcFitness)
         {
-            var points = new List<Point>();
-
-            int pointSize = (bytes.Count - 4) / numberOfPoints;
-
-            for (int i = 0; i < numberOfPoints; i++)
+            const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
+            var bitmap = new Bitmap(fileNameWithPath);
+            var bytes = bitmap.GetBytesFromBitmap();
+            var bytes2 = bytes.Reverse().ToArray();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            int runs = 1000;
+            for (int i = 0; i < runs; i++)
             {
-                int bitmapOffset = 0;
-                for (int j = 0; j < pointSize; j++)
-                {
-                    int byteOffset = i * pointSize + j;
-                    bitmapOffset <<= 8;
-                    bitmapOffset |= bytes[byteOffset];
-                }
-                bitmapOffset = Math.Abs(bitmapOffset) % (bitmapWidth * bitmapHeight);
-                int y = bitmapOffset / bitmapWidth;
-                int x = bitmapOffset % bitmapWidth;
-                points.Add(new Point(x, y));
+                uint fitness = calcFitness(bytes, bytes2);
             }
-
-            Points = points.ToArray();
-            int colorOffset = numberOfPoints * pointSize;
-            Color = Color.FromArgb(bytes[colorOffset], bytes[colorOffset + 1], bytes[colorOffset + 2], bytes[colorOffset + 3]);
-        }
-
-        public Color Color { get; private set; }
-        public Point[] Points { get; private set; }
-
-        protected static int GetEncodingSizeInBytes(int imageWidth, int imageHeight, int numberOfPoints)
-        {
-            int pointSizeInBytes = (int)Math.Ceiling(Math.Log(imageWidth * imageHeight, 2) / 8.0) * 2;
-            const int colorSize = 4 * 2;
-            int shapeSizeInBytes = numberOfPoints * pointSizeInBytes + colorSize;
-            return shapeSizeInBytes;
-        }
-    }
-
-    public class Triangle : Shape, IShape
-    {
-        private const int NumberOfPoints = 3;
-
-        public Triangle(IList<byte> bytes, int bitmapWidth, int bitmapHeight)
-            : base(bytes, bitmapWidth, bitmapHeight, NumberOfPoints)
-        {
-        }
-
-        public void Draw(Graphics graphics, int offsetX, int offsetY)
-        {
-            int avgX = (int)Points.Average(x => x.X);
-            int avgY = (int)Points.Average(x => x.Y);
-            var offsetPoints = Points.Select(x => new Point(x.X + offsetX - avgX, x.Y + offsetY - avgY)).ToArray();
-            graphics.FillPolygon(new SolidBrush(Color), offsetPoints);
-        }
-
-        public static int GetEncodingSizeInBytes(int imageWidth, int imageHeight)
-        {
-            return GetEncodingSizeInBytes(imageWidth, imageHeight, NumberOfPoints);
-        }
-    }
-
-    public class Line : Shape, IShape
-    {
-        private const int NumberOfPoints = 2;
-
-        public Line(IList<byte> bytes, int bitmapWidth, int bitmapHeight)
-            : base(bytes, bitmapWidth, bitmapHeight, NumberOfPoints)
-        {
-        }
-
-        public void Draw(Graphics graphics, int offsetX, int offsetY)
-        {
-            var offsetPoints = Points.Select(x => new Point(x.X + offsetX, x.Y + offsetY)).ToArray();
-            graphics.DrawLine(new Pen(Color), offsetPoints[0], offsetPoints[1]);
-        }
-
-        public static int GetEncodingSizeInBytes(int imageWidth, int imageHeight)
-        {
-            return GetEncodingSizeInBytes(imageWidth, imageHeight, NumberOfPoints);
-        }
-    }
-
-    public class Ellipse : Shape, IShape
-    {
-        private const int NumberOfPoints = 2;
-
-        public Ellipse(IList<byte> bytes, int bitmapWidth, int bitmapHeight)
-            : base(bytes, bitmapWidth, bitmapHeight, NumberOfPoints)
-        {
-        }
-
-        public void Draw(Graphics graphics, int offsetX, int offsetY)
-        {
-            var offsetPoints = Points.Select(x => new Point(x.X + offsetX, x.Y + offsetY)).ToArray();
-            graphics.FillEllipse(new SolidBrush(Color), offsetPoints[0].X - Points[1].X / 2, offsetPoints[0].Y - Points[1].Y / 2, Points[1].X, Points[1].Y);
-        }
-
-        public static int GetEncodingSizeInBytes(int imageWidth, int imageHeight)
-        {
-            return GetEncodingSizeInBytes(imageWidth, imageHeight, NumberOfPoints);
-        }
-    }
-
-    public class Circle : Shape, IShape
-    {
-        private const int NumberOfPoints = 2;
-
-        public Circle(IList<byte> bytes, int bitmapWidth, int bitmapHeight)
-            : base(bytes, bitmapWidth, bitmapHeight, NumberOfPoints)
-        {
-        }
-
-        public void Draw(Graphics graphics, int offsetX, int offsetY)
-        {
-            var offsetPoints = Points.Select(x => new Point(x.X + offsetX, x.Y + offsetY)).ToArray();
-            int centerOfCircleAdjustment = Points[1].X / 2;
-            graphics.FillEllipse(new SolidBrush(Color), offsetPoints[0].X - centerOfCircleAdjustment, offsetPoints[0].Y - centerOfCircleAdjustment, Points[1].X, Points[1].X);
-        }
-
-        public static int GetEncodingSizeInBytes(int imageWidth, int imageHeight)
-        {
-            return GetEncodingSizeInBytes(imageWidth, imageHeight, NumberOfPoints);
+            stopwatch.Stop();
+            Console.WriteLine(runs + " runs, average seconds: " + stopwatch.Elapsed.TotalSeconds / runs);
         }
     }
 }

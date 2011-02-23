@@ -61,7 +61,7 @@ namespace Scratch.GeneticAlgorithm
                     }
                     return fitness;
                 };
-            string best = new GeneticSolver().GetBestGenetically(target.Length, genes, calcFitness, true);
+            string best = new GeneticSolver().GetBestGenetically(target.Length, genes, calcFitness);
             Console.WriteLine(best);
         }
     }
