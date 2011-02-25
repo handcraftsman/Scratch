@@ -81,6 +81,9 @@
     <Compile Include="FileFtp\FtpDemo.cs" />
     <Compile Include="FindOutOfOrderListItems\IEnumerableTExtensions.cs" />
     <Compile Include="FindOutOfOrderListItems\Tests.cs" />
+    <Compile Include="WhenDsl\IntExtensions.cs" />
+    <Compile Include="WhenDsl\IntExtensionsTests.cs" />
+    <Compile Include="WhenDsl\TExtensions.cs" />
     <Compile Include="GeneticAlgorithm\GeneSequence.cs" />
     <Compile Include="GeneticAlgorithm\Strategies\Crossover.cs" />
     <Compile Include="GeneticAlgorithm\GeneticSolver.cs" />
