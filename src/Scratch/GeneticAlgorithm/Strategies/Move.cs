@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 using Scratch.ShuffleIEnumerable;
@@ -28,13 +29,13 @@ namespace Scratch.GeneticAlgorithm.Strategies
             get { return "Move"; }
         }
 
-        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt)
+        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt, int freezeGenesUpTo)
         {
             var parent = parents[getRandomInt(parents.Count)];
 
-            var indexes = Enumerable.Range(0, numberOfGenesToUse / numberOfGenesInUnitOfMeaning)
+            var indexes = Enumerable.Range(freezeGenesUpTo / numberOfGenesInUnitOfMeaning, (numberOfGenesToUse - freezeGenesUpTo) / numberOfGenesInUnitOfMeaning)
                 .Shuffle().Take(2).ToArray();
-            if (indexes.Length == 1)
+            if (indexes.Length < 2)
             {
                 return parent;
             }
@@ -42,13 +43,25 @@ namespace Scratch.GeneticAlgorithm.Strategies
             int targetIndex = indexes.Last() * numberOfGenesInUnitOfMeaning;
 
             var genes = parent.Genes.ToList();
-            var unit = genes.Skip(sourceIndex).Take(numberOfGenesToUse).ToArray();
+            var unit = genes.Skip(sourceIndex).Take(numberOfGenesInUnitOfMeaning).ToArray();
             genes.RemoveRange(sourceIndex, numberOfGenesInUnitOfMeaning);
             genes.InsertRange(targetIndex > sourceIndex ? targetIndex - 1 : targetIndex, unit);
 
-            return new GeneSequence(new String(genes.ToArray()), this);
+            string childGenes = new String(genes.ToArray());
+            VerifyGeneLength(parent, childGenes);
+
+            return new GeneSequence(childGenes, this);
         }
 
         public int OrderBy { get; set; }
+
+        [Conditional("Debug")]
+        private static void VerifyGeneLength(GeneSequence parent, string childGenes)
+        {
+            if (childGenes.Length != parent.Genes.Length)
+            {
+                throw new ArgumentException("result is different length from parent");
+            }
+        }
     }
 }

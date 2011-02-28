@@ -9,6 +9,7 @@
 //  * **********************************************************************************
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Scratch.GeneticAlgorithm.Strategies
 {
@@ -24,15 +25,26 @@ namespace Scratch.GeneticAlgorithm.Strategies
             get { return "Mutation"; }
         }
 
-        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt)
+        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt, int freezeGenesUpTo)
         {
             var parent = parents[getRandomInt(parents.Count)];
             var mutated = parent.Genes.ToCharArray();
-            int index0 = getRandomInt(numberOfGenesToUse);
+            int index0 = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
             mutated[index0] = getRandomGene();
-            return new GeneSequence(new string(mutated), this);
+            string childGenes = new string(mutated);
+            VerifyGeneLength(parent, childGenes);
+            return new GeneSequence(childGenes, this);
         }
 
         public int OrderBy { get; set; }
+
+        [Conditional("Debug")]
+        private static void VerifyGeneLength(GeneSequence parent, string childGenes)
+        {
+            if (childGenes.Length != parent.Genes.Length)
+            {
+                throw new ArgumentException("result is different length from parent");
+            }
+        }
     }
 }

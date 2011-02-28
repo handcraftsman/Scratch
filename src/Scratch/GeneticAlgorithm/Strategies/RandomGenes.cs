@@ -9,6 +9,7 @@
 //  * **********************************************************************************
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace Scratch.GeneticAlgorithm.Strategies
@@ -27,15 +28,33 @@ namespace Scratch.GeneticAlgorithm.Strategies
             get { return "Random"; }
         }
 
-        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt)
+        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt, int freezeGenesUpTo)
         {
             var geneBuilder = new StringBuilder();
-            for (int j = 0; j < numberOfGenesToUse; j++)
+            for (int j = 0; j < numberOfGenesToUse - freezeGenesUpTo; j++)
             {
                 geneBuilder.Append(getRandomGene());
             }
 
-            return new GeneSequence(geneBuilder.ToString(), this);
+            string childGenes = geneBuilder.ToString();
+
+            if (freezeGenesUpTo > 0)
+            {
+                var parent = parents[getRandomInt(parents.Count)];
+                childGenes = parent.Genes.Substring(freezeGenesUpTo) + childGenes;
+            }
+
+            VerifyGeneLength(numberOfGenesToUse, childGenes);
+            return new GeneSequence(childGenes, this);
+        }
+
+        [Conditional("Debug")]
+        private static void VerifyGeneLength(int numberOfGenesToUse, string childGenes)
+        {
+            if (childGenes.Length != numberOfGenesToUse)
+            {
+                throw new ArgumentException("result is different length from parent");
+            }
         }
     }
 }

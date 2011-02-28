@@ -7,6 +7,7 @@
 //  * the terms of the MIT License.
 //  * You must not remove this notice from this software.
 //  * **********************************************************************************
+
 using System;
 
 using Scratch.GeneticAlgorithm.Strategies;
@@ -15,14 +16,17 @@ namespace Scratch.GeneticAlgorithm
 {
     public class GeneSequence
     {
+        public static readonly uint DefaultFitness = UInt32.MaxValue;
+
         public GeneSequence(string genes, IChildGenerationStrategy strategy)
         {
             Genes = genes;
-            Fitness = Int32.MaxValue;
+            Fitness = DefaultFitness;
             Strategy = strategy;
         }
 
         public uint Fitness { get; set; }
+        public int Generation { get; set; }
         public string Genes { get; set; }
 
         public IChildGenerationStrategy Strategy { get; private set; }
@@ -43,7 +47,7 @@ namespace Scratch.GeneticAlgorithm
                 dispGenes = dispGenes.Substring(0, 20) + " ...";
             }
 
-            return dispGenes + " fitness: " + Fitness + " strategy: " + Strategy.Description;
+            return dispGenes + " fitness: " + Fitness + " strategy: " + Strategy.Description+" gen: "+Generation;
         }
     }
 }

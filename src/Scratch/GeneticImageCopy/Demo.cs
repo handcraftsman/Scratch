@@ -28,6 +28,8 @@ namespace Scratch.GeneticImageCopy
     public class Demo
     {
         private static decimal _previousPercentage;
+        private static int? _previousGeneration;
+        private static decimal _minGenerationGapBetweenWrites;
 
         [Test]
         [Explicit]
@@ -102,27 +104,47 @@ namespace Scratch.GeneticImageCopy
 
             decimal percentage = Math.Round(((max - fitness * 1m) / max) * 100m, 2);
             string filename = "image_" + generation + ".jpg";
-            if (percentage == _previousPercentage)
+            if (percentage == _previousPercentage || 
+                _previousGeneration != null && generation-_previousGeneration.Value < _minGenerationGapBetweenWrites)
             {
                 filename = "final.jpg";
             }
             else
             {
                 _previousPercentage = percentage;
+                _previousGeneration = generation;
                 Console.WriteLine("Generation " + generation + " fitness " + fitness + " by " + howCreated + " = " + percentage + "% match");
                 File.Delete("final.jpg");
+                _minGenerationGapBetweenWrites = (int)(_minGenerationGapBetweenWrites * 1.01m);
             }
+            var shapeCount = genes.Length / shapeSizeInBytes;
             using (var generatedBitmap = GenesToBitmap<T>(genes, shapeSizeInBytes, width, height, targetImage.PixelFormat))
             {
                 using (var combined = new Bitmap(2 * width, 20 + height))
                 {
                     using (var graphics = Graphics.FromImage(combined))
                     {
-                        graphics.DrawImage(generatedBitmap, 0, 0, new Rectangle(0, 0, generatedBitmap.Width, generatedBitmap.Height), GraphicsUnit.Pixel);
-                        graphics.DrawImage(targetImage, generatedBitmap.Width, 0, new Rectangle(0, 0, generatedBitmap.Width, generatedBitmap.Height), GraphicsUnit.Pixel);
+                        for (int i = 0; i < width; i++)
+                        {
+                            for (int j = 0; j < height; j++)
+                            {
+                                combined.SetPixel(i, j, generatedBitmap.GetPixel(i, j));
+                                combined.SetPixel(width + i, j, targetImage.GetPixel(i, j));
+                            }
+                        }
+
+//                        var srcRect = new Rectangle(0, 0, width, height);
+//                        graphics.DrawImage(generatedBitmap, 0, 0, srcRect, GraphicsUnit.Pixel);
+//                        graphics.DrawImage(targetImage, width, 0, srcRect, GraphicsUnit.Pixel);
 
                         graphics.FillRectangle(Brushes.White, 0, height, 2 * width, 20);
-                        graphics.DrawString("Generation " + generation.ToString().PadRight(10) + percentage.ToString().PadLeft(5) + "%    elapsed: " + timer.Elapsed, new Font("Times New Roman", 12), Brushes.Black, 2, height + 1);
+                        var elapsed = timer.Elapsed.ToString();
+                        graphics.DrawString(
+                            "Generation " + generation.ToString().PadRight(10) 
+                            + percentage.ToString().PadLeft(5) 
+                            + "%    elapsed: " + elapsed.Substring(0, elapsed.LastIndexOf('.'))
+                            + shapeCount.ToString().PadLeft(5)+" "+(typeof(T).Name)+(shapeCount != 1 ? "s" : ""), 
+                            new Font("Times New Roman", 12), Brushes.Black, 2, height + 1);
                     }
 
                     combined.Save(filename);
@@ -161,6 +183,8 @@ namespace Scratch.GeneticImageCopy
             where T : IShape
         {
             _previousPercentage = 100;
+            _minGenerationGapBetweenWrites = 10;
+            _previousGeneration = null;
             var targetImage = new Bitmap(fileNameWithPath);
             int width = targetImage.Width;
             int height = targetImage.Height;
@@ -186,6 +210,7 @@ namespace Scratch.GeneticImageCopy
             var solver = new GeneticSolver(2000)
                 {
                     UseHillClimbing = useHillClimbing,
+                    OnlyPermuteNewGenesWhileHillClimbing = false,
                     NumberOfGenesInUnitOfMeaning = shapeSizeInBytes,
                     UseFastSearch = true,
                     DisplayHowCreatedPercentages = true,

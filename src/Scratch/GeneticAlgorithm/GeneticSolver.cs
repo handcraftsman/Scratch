@@ -27,6 +27,7 @@ namespace Scratch.GeneticAlgorithm
         private const float GaElitrate = 0.10f;
         private const int GaPopsize = 2048;
         private const int MaxImprovmentsToKeepFromEachRound = 5;
+        private const int MinimumStrategyPercentage = 2;
         private const int RandomCitizenCount = 10;
         private const decimal SlideRate = 0.001m;
 
@@ -37,7 +38,6 @@ namespace Scratch.GeneticAlgorithm
         private int _numberOfGenesInUnitOfMeaning = 1;
         private Random _random;
         private int _randomSeed;
-        private const int MinimumStrategyPercentage = 2;
 
         public GeneticSolver()
             : this(DefaultMaxGenerationsWithoutImprovement)
@@ -67,6 +67,7 @@ namespace Scratch.GeneticAlgorithm
 
             _randomStrategy = childGenerationStrategies.FirstOrDefault(x => x.GetType() == typeof(RandomGenes)) ?? new RandomGenes();
 
+            OnlyPermuteNewGenesWhileHillClimbing = true;
             DisplayGenes = (generation, fitness, genes, howCreated) => Console.WriteLine("Generation {0} fitness {1}: {2}", generation.ToString().PadLeft(_gaMaxGenerationsWithoutImprovement.ToString().Length), fitness, genes);
         }
 
@@ -83,13 +84,17 @@ namespace Scratch.GeneticAlgorithm
         }
         public bool UseFastSearch { get; set; }
         public bool UseHillClimbing { get; set; }
+        public bool OnlyPermuteNewGenesWhileHillClimbing { get; set; }
 
         private static IEnumerable<GeneSequence> CalcFitness(IList<GeneSequence> population, Func<string, uint> calcDistanceFromTarget)
         {
             for (int i = 0; i < GaPopsize; i++)
             {
                 var geneSequence = population[i];
-                geneSequence.Fitness = calcDistanceFromTarget(geneSequence.Genes);
+                if (geneSequence.Fitness == GeneSequence.DefaultFitness)
+                {
+                    geneSequence.Fitness = calcDistanceFromTarget(geneSequence.Genes);
+                }
                 yield return geneSequence;
             }
         }
@@ -117,28 +122,33 @@ namespace Scratch.GeneticAlgorithm
             }
         }
 
-        private void CreateNextGeneration(int numberOfGenesToUse, List<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene, IEnumerable<GeneSequence> previousBests)
+        private void CreateNextGeneration(int freezeGenesUpTo, int numberOfGenesToUse, List<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene, IEnumerable<GeneSequence> previousBests)
         {
             CopyBestParents(population, buffer);
             CopyPreviousBests(previousBests, population);
             SortByFitness(population);
 
-            GenerateChildren(numberOfGenesToUse, population, buffer, getRandomGene);
+            GenerateChildren(freezeGenesUpTo, numberOfGenesToUse, population, buffer, getRandomGene);
         }
 
         private static int FitnessSort(GeneSequence x, GeneSequence y)
         {
-            return x.Fitness.CompareTo(y.Fitness);
+            var result = x.Fitness.CompareTo(y.Fitness);
+            if (result == 0)
+            {
+                result = y.Generation.CompareTo(x.Generation);
+            }
+            return result;
         }
 
-        private void GenerateChildren(int numberOfGenesToUse, IList<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene)
+        private void GenerateChildren(int freezeGenesUpTo, int numberOfGenesToUse, IEnumerable<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene)
         {
             var unique = new HashSet<string>();
             var parents = population.Where(x => unique.Add(x.Genes)).Take(50).ToList();
-            for (int i = 0; i < RandomCitizenCount; i++)
-            {
-                parents.Add(_randomStrategy.Generate(null, numberOfGenesToUse, getRandomGene, NumberOfGenesInUnitOfMeaning, 0, _random.Next));
-            }
+//            for (int i = 0; i < RandomCitizenCount; i++)
+//            {
+//                parents.Add(_randomStrategy.Generate(null, numberOfGenesToUse, getRandomGene, NumberOfGenesInUnitOfMeaning, 0, _random.Next, freezeGenesUpTo));
+//            }
 
             for (int i = 0; i < GaPopsize; i++)
             {
@@ -147,7 +157,7 @@ namespace Scratch.GeneticAlgorithm
                 {
                     if (percentage < strategy.First)
                     {
-                        buffer[i] = strategy.Second.Generate(parents, numberOfGenesToUse, getRandomGene, numberOfGenesToUse, _slidingMutationRate, _random.Next);
+                        buffer[i] = strategy.Second.Generate(parents, numberOfGenesToUse, getRandomGene, NumberOfGenesInUnitOfMeaning, _slidingMutationRate, _random.Next, freezeGenesUpTo);
                         break;
                     }
                     percentage -= strategy.First;
@@ -157,7 +167,7 @@ namespace Scratch.GeneticAlgorithm
 
         public string GetBestGenetically(int numberOfGenesToUse, string possibleGenes, Func<string, uint> calcFitness)
         {
-            var seed = _randomSeed != 0 ?_randomSeed : (int)DateTime.Now.Ticks;
+            int seed = _randomSeed != 0 ? _randomSeed : (int)DateTime.Now.Ticks;
             Console.WriteLine("using random seed: " + seed);
             _random = new Random(seed);
 
@@ -178,33 +188,44 @@ namespace Scratch.GeneticAlgorithm
 
             if (UseHillClimbing)
             {
-                for (int i = NumberOfGenesInUnitOfMeaning; i < numberOfGenesToUse - 1; i+=NumberOfGenesInUnitOfMeaning)
+                for (int i = NumberOfGenesInUnitOfMeaning; i < numberOfGenesToUse - 1; i += NumberOfGenesInUnitOfMeaning)
                 {
-                    GetBestGenetically(i, getRandomGene, 30, previousBests, population, spare, calcFitness, ref generation);
+                    GetBestGenetically(OnlyPermuteNewGenesWhileHillClimbing ? i - NumberOfGenesInUnitOfMeaning : 0, i, getRandomGene, 20, previousBests, population, spare, calcFitness, ref generation);
                     var incrementalBest = previousBests.First();
-                    InitPopulation(i + NumberOfGenesInUnitOfMeaning, population, spare, getRandomGene);
-                    previousBests.Clear();
-                    for (int j = 0; j < 20; j++)
-                    {
-                        var random = _randomStrategy.Generate(null, NumberOfGenesInUnitOfMeaning, getRandomGene, NumberOfGenesInUnitOfMeaning, _slidingMutationRate, _random.Next);
-                        var newChild = incrementalBest.Clone();
-                        newChild.Genes = random.Genes + newChild.Genes;
 
-                        previousBests.Add(newChild);
-                        previousBests[j].Fitness = calcFitness(previousBests[j].Genes);
-                        population[j] = newChild;
-                        spare[j] = newChild.Clone();
+                    population.Clear();
+                    spare.Clear();
+
+                    previousBests.Clear();
+                    for (int j = 0; j < GaPopsize; j++)
+                    {
+                        var random = _randomStrategy.Generate(null, NumberOfGenesInUnitOfMeaning, getRandomGene, NumberOfGenesInUnitOfMeaning, _slidingMutationRate, _random.Next, 0);
+                        var newChild = incrementalBest.Clone();
+                        newChild.Genes = newChild.Genes + random.Genes;
+                        newChild.Fitness = GeneSequence.DefaultFitness;
+
+                        population.Add(newChild);
+                        spare.Add(newChild.Clone());
                     }
-                    var count = 1 + (i / NumberOfGenesInUnitOfMeaning);
+                    previousBests.Add(population.Select(x=>
+                        {
+                            x.Fitness = calcFitness(x.Genes);
+                            return x;
+                        }).FirstOrDefault(x=>x.Fitness < incrementalBest.Fitness)??population.OrderBy(x=>x.Fitness).First());
+                    int count = 1 + (i / NumberOfGenesInUnitOfMeaning);
                     Console.WriteLine("> " + count);
+                    if (previousBests[0].Fitness < incrementalBest.Fitness)
+                    {
+                        PrintBest(generation, previousBests[0]);
+                    }
                 }
             }
 
-            var best = GetBestGenetically(numberOfGenesToUse, getRandomGene, _gaMaxGenerationsWithoutImprovement, previousBests, population, spare, calcFitness, ref generation);
+            string best = GetBestGenetically(0, numberOfGenesToUse, getRandomGene, _gaMaxGenerationsWithoutImprovement, previousBests, population, spare, calcFitness, ref generation);
             return best;
         }
 
-        private string GetBestGenetically(int numberOfGenesToUse, Func<char> getRandomGene, int maxGenerationsWithoutImprovement, List<GeneSequence> previousBests, List<GeneSequence> population, List<GeneSequence> spare, Func<string, uint> calcFitness, ref int generation)
+        private string GetBestGenetically(int freezeGenesUpTo, int numberOfGenesToUse, Func<char> getRandomGene, int maxGenerationsWithoutImprovement, List<GeneSequence> previousBests, List<GeneSequence> population, List<GeneSequence> spare, Func<string, uint> calcFitness, ref int generation)
         {
             _slidingMutationRate = DefaultMutationRate;
             for (int i = 0; i < maxGenerationsWithoutImprovement; i++, generation++)
@@ -218,7 +239,7 @@ namespace Scratch.GeneticAlgorithm
                     .Take(UseFastSearch && i < 20 ? GaPopsize / 10 : GaPopsize)
                     .Where(x => x.Fitness <= worstFitness)
                     .Where(x => previousBestLookup.Add(x.Genes))
-                    .Take(UseFastSearch ? MaxImprovmentsToKeepFromEachRound : (int)((1-_slidingMutationRate)*GaPopsize))
+                    .Take(UseFastSearch ? MaxImprovmentsToKeepFromEachRound : (int)((1 - _slidingMutationRate) * GaPopsize))
                     .ToList();
 
                 if (newSequences.Any())
@@ -230,12 +251,16 @@ namespace Scratch.GeneticAlgorithm
                         PrintBest(generation, newSequences.First());
                         i = -1;
                     }
-                    previousBests.AddRange(newSequences.Select(x => x.Clone()));
+                    foreach (var copy in newSequences.Select(geneSequence => geneSequence.Clone()))
+                    {
+                        copy.Generation = generation;
+                        previousBests.Add(copy);
+                    }
                     int numberToKeep = Math.Max(100, previousBests.Count(x => x.Fitness == first.Fitness));
                     SortByFitness(previousBests);
                     if (numberToKeep < previousBests.Count)
                     {
-                        previousBests = previousBests.Take(numberToKeep).ToList();
+                        previousBests.RemoveRange(numberToKeep, previousBests.Count - numberToKeep);
                     }
                     UpdateStrategyPercentages(previousBests, generation);
 
@@ -251,54 +276,12 @@ namespace Scratch.GeneticAlgorithm
                     break;
                 }
 
-                CreateNextGeneration(numberOfGenesToUse, population, spare, getRandomGene, previousBests);
+                CreateNextGeneration(freezeGenesUpTo, numberOfGenesToUse, population, spare, getRandomGene, previousBests);
                 var temp = spare;
                 spare = population;
                 population = temp;
             }
             return previousBests.First().Genes;
-        }
-
-        private void UpdateStrategyPercentages(ICollection<GeneSequence> previousBests, int generation)
-        {
-            var minimumStrategyPercentageValue = (int)Math.Ceiling(MinimumStrategyPercentage/100m*previousBests.Count);
-            var strategiesInUse = previousBests
-                .Select(x => x.Strategy)
-                .GroupBy(x => x)
-                .Where(x=>x.Count() >= minimumStrategyPercentageValue)
-                .ToList();
-            int adjustedPreviousBestsCount = previousBests.Count 
-                                             + (_childGenerationStrategies.Count - strategiesInUse.Count) * minimumStrategyPercentageValue;
-
-            foreach (var strategy in _childGenerationStrategies)
-            {
-                bool found = false;
-                foreach (var strategyInUse in strategiesInUse)
-                {
-                    if (strategy.Second == strategyInUse.Key)
-                    {
-                        strategy.First = 100.0m * Math.Max(minimumStrategyPercentageValue,strategyInUse.Count()) / adjustedPreviousBestsCount;
-                        found = true;
-                    }
-                }
-                if (!found)
-                {
-                    strategy.First = 0;
-                }
-            }
-
-            // normalize to 100 %
-            var strategySum = _childGenerationStrategies.Sum(x => Math.Max(MinimumStrategyPercentage,x.First));
-            foreach (var strategy in _childGenerationStrategies)
-            {
-                strategy.First = 100.0m * Math.Max(MinimumStrategyPercentage,strategy.First) / strategySum;
-            }
-
-            if (generation%100 == 0)
-            {
-                var strategyPercentages = _childGenerationStrategies.Select(x => x.Second.Description + " " + (x.First < 10 ? " " : "") + Math.Round(x.First, 1).ToString().PadRight(x.First < 10 ? 3 : 4)).ToArray();
-                Console.WriteLine("% " + String.Join(" ", strategyPercentages));
-            }
         }
 
         private void InitPopulation(int numberOfGenesToUse, ICollection<GeneSequence> population, List<GeneSequence> buffer, Func<char> getRandomGene)
@@ -307,7 +290,7 @@ namespace Scratch.GeneticAlgorithm
             buffer.Clear();
             for (int i = 0; i < GaPopsize; i++)
             {
-                population.Add(_randomStrategy.Generate(null, numberOfGenesToUse, getRandomGene, NumberOfGenesInUnitOfMeaning, _slidingMutationRate, _random.Next));
+                population.Add(_randomStrategy.Generate(null, numberOfGenesToUse, getRandomGene, NumberOfGenesInUnitOfMeaning, _slidingMutationRate, _random.Next, 0));
             }
 
             buffer.AddRange(population.Select(x => x.Clone()));
@@ -321,6 +304,48 @@ namespace Scratch.GeneticAlgorithm
         private static void SortByFitness(List<GeneSequence> population)
         {
             population.Sort(FitnessSort);
+        }
+
+        private void UpdateStrategyPercentages(ICollection<GeneSequence> previousBests, int generation)
+        {
+            int minimumStrategyPercentageValue = (int)Math.Ceiling(MinimumStrategyPercentage / 100m * previousBests.Count);
+            var strategiesInUse = previousBests
+                .Select(x => x.Strategy)
+                .GroupBy(x => x)
+                .Where(x => x.Count() >= minimumStrategyPercentageValue)
+                .ToList();
+            int adjustedPreviousBestsCount = previousBests.Count
+                                             + (_childGenerationStrategies.Count - strategiesInUse.Count) * minimumStrategyPercentageValue;
+
+            foreach (var strategy in _childGenerationStrategies)
+            {
+                bool found = false;
+                foreach (var strategyInUse in strategiesInUse)
+                {
+                    if (strategy.Second == strategyInUse.Key)
+                    {
+                        strategy.First = 100.0m * Math.Max(minimumStrategyPercentageValue, strategyInUse.Count()) / adjustedPreviousBestsCount;
+                        found = true;
+                    }
+                }
+                if (!found)
+                {
+                    strategy.First = 0;
+                }
+            }
+
+            // normalize to 100 %
+            decimal strategySum = _childGenerationStrategies.Sum(x => Math.Max(MinimumStrategyPercentage, x.First));
+            foreach (var strategy in _childGenerationStrategies)
+            {
+                strategy.First = 100.0m * Math.Max(MinimumStrategyPercentage, strategy.First) / strategySum;
+            }
+
+            if (generation % 100 == 0)
+            {
+                var strategyPercentages = _childGenerationStrategies.Select(x => x.Second.Description + " " + (x.First < 10 ? " " : "") + Math.Round(x.First, 1).ToString().PadRight(x.First < 10 ? 3 : 4)).ToArray();
+                Console.WriteLine("% " + String.Join(" ", strategyPercentages));
+            }
         }
     }
 }

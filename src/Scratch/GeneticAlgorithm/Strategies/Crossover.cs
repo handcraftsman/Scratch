@@ -10,6 +10,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 using Scratch.ShuffleIEnumerable;
@@ -28,7 +29,7 @@ namespace Scratch.GeneticAlgorithm.Strategies
             get { return "Crossover"; }
         }
 
-        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt)
+        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt, int freezeGenesUpTo)
         {
             var indexes = Enumerable.Range(0, parents.Count)
                 .Shuffle().Take(2).ToArray();
@@ -38,29 +39,39 @@ namespace Scratch.GeneticAlgorithm.Strategies
 
             string parentA = parents[i1].Genes;
             string parentB = parents[i2].Genes;
-            var childGenes = parentA.ToArray();
+            var genes = parentA.ToArray();
 
-            int numberOfGenesToCross = Math.Min(5,(int)(numberOfGenesToUse * slidingMutationRate));
-            if (numberOfGenesInUnitOfMeaning == 1 || getRandomInt(2) == 0)
+            int numberOfGenesToCross = Math.Min(5, (int)(numberOfGenesToUse * slidingMutationRate));
+            if (numberOfGenesInUnitOfMeaning == 1 ||
+                numberOfGenesToUse - freezeGenesUpTo == numberOfGenesInUnitOfMeaning ||
+                getRandomInt(2) == 0)
             {
                 for (int j = 0; j < numberOfGenesToCross; j++)
                 {
-                    int index0 = getRandomInt(numberOfGenesToUse);
-                    childGenes[index0] = parentB[index0];
+                    int index0 = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
+                    genes[index0] = parentB[index0];
                 }
             }
             else
             {
                 int numberOfUnitsToCross = numberOfGenesToCross / numberOfGenesInUnitOfMeaning;
-//                for (int j = 0; j < numberOfUnitsToCross; j++)
-                {
-                    int index = getRandomInt(numberOfUnitsToCross) * numberOfGenesInUnitOfMeaning;
-                    Array.Copy(parentB.ToArray(), index, childGenes, index, numberOfGenesInUnitOfMeaning);
-                }
+                int index = getRandomInt(numberOfUnitsToCross) * numberOfGenesInUnitOfMeaning;
+                Array.Copy(parentB.ToArray(), index, genes, index, numberOfGenesInUnitOfMeaning);
             }
-            return new GeneSequence(new string(childGenes), this);
+            string childGenes = new String(genes);
+            VerifyGeneLength(parentA, childGenes);
+            return new GeneSequence(childGenes, this);
         }
 
         public int OrderBy { get; set; }
+
+        [Conditional("Debug")]
+        private static void VerifyGeneLength(string parentA, string childGenes)
+        {
+            if (childGenes.Length != parentA.Length)
+            {
+                throw new ArgumentException("result is different length from parent");
+            }
+        }
     }
 }

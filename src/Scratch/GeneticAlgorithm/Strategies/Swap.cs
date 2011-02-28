@@ -9,6 +9,7 @@
 //  * **********************************************************************************
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Scratch.GeneticAlgorithm.Strategies
@@ -27,15 +28,20 @@ namespace Scratch.GeneticAlgorithm.Strategies
             get { return "Swap"; }
         }
 
-        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt)
+        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt, int freezeGenesUpTo)
         {
             var parent = parents[getRandomInt(parents.Count)];
             var genes = parent.Genes.ToCharArray();
 
-
-            int pointA = getRandomInt(numberOfGenesToUse);
-            int pointB = getRandomInt(numberOfGenesToUse);
-            if (numberOfGenesInUnitOfMeaning == 1 || getRandomInt(2) == 0)
+            int pointA = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
+            int pointB = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
+            if (pointA == pointB)
+            {
+                return parent.Clone();
+            }
+            if (numberOfGenesInUnitOfMeaning == 1 ||
+                numberOfGenesToUse - freezeGenesUpTo == numberOfGenesInUnitOfMeaning ||
+                getRandomInt(2) == 0)
             {
                 SwapTwoGenes(genes, pointA, pointB);
             }
@@ -46,7 +52,10 @@ namespace Scratch.GeneticAlgorithm.Strategies
                 SwapTwoUnitsOfMeaning(genes, pointA, pointB, numberOfGenesInUnitOfMeaning);
             }
 
-            var child = new GeneSequence(new String(genes), this);
+            string childGenes = new String(genes);
+            VerifyGeneLength(parent, childGenes);
+
+            var child = new GeneSequence(childGenes, this);
 
             return child;
         }
@@ -71,6 +80,15 @@ namespace Scratch.GeneticAlgorithm.Strategies
             var unitB = genes.Skip(offsetB).Take(numberOfGenesInUnitOfMeaning).ToArray();
             CopyUnitOfMeaningToGenesAtOffset(unitB, genes, offsetA);
             CopyUnitOfMeaningToGenesAtOffset(unitA, genes, offsetB);
+        }
+
+        [Conditional("Debug")]
+        private static void VerifyGeneLength(GeneSequence parent, string childGenes)
+        {
+            if (childGenes.Length != parent.Genes.Length)
+            {
+                throw new ArgumentException("result is different length from parent");
+            }
         }
     }
 }
