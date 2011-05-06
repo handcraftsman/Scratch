@@ -84,6 +84,7 @@
     <Compile Include="FindOutOfOrderListItems\Tests.cs" />
     <Compile Include="DirectoryParents\Tests.cs" />
     <Compile Include="ImageColors\Demo.cs" />
+    <Compile Include="SequentialLinq\Tests.cs" />
     <Compile Include="WhenDsl\IntExtensions.cs" />
     <Compile Include="WhenDsl\IntExtensionsTests.cs" />
     <Compile Include="WhenDsl\TExtensions.cs" />
