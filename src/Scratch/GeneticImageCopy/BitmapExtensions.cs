@@ -18,7 +18,7 @@ namespace Scratch.GeneticImageCopy
     {
         public static byte[] GetBytesFromBitmap(this Bitmap bitmap)
         {
-            var rectangle = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+            var rectangle = new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height);
             var bData = bitmap.LockBits(rectangle, ImageLockMode.ReadWrite, bitmap.PixelFormat);
             byte[] data;
             try
