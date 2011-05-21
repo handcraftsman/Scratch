@@ -27,17 +27,26 @@ namespace Scratch.GeneticImageCopy
     [TestFixture]
     public class Demo
     {
-        private static decimal _previousPercentage;
-        private static int? _previousGeneration;
         private static decimal _minGenerationGapBetweenWrites;
+        private static int? _previousGeneration;
+        private static decimal _previousPercentage;
 
         [Test]
         [Explicit]
         public void Draw_with_circles()
         {
-            const string fileNameWithPath = @"D:\data\projects\csharp\Scratch\github\src\Scratch\GeneticImageCopy\monalisa.jpg";
+            const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
             DeletePreviousImages();
-            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 500, true);
+            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 150, true);
+        }
+
+        [Test]
+        [Explicit]
+        public void Draw_with_rectangles()
+        {
+            const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
+            DeletePreviousImages();
+            GeneticallyDuplicateWithShape<Rectangle>(fileNameWithPath, 16, true);
         }
 
         [Test]
@@ -104,8 +113,8 @@ namespace Scratch.GeneticImageCopy
 
             decimal percentage = Math.Round(((max - fitness * 1m) / max) * 100m, 2);
             string filename = "image_" + generation + ".jpg";
-            if (percentage == _previousPercentage || 
-                _previousGeneration != null && generation-_previousGeneration.Value < _minGenerationGapBetweenWrites)
+            if (percentage == _previousPercentage ||
+                _previousGeneration != null && generation - _previousGeneration.Value < _minGenerationGapBetweenWrites)
             {
                 filename = "final.jpg";
             }
@@ -117,11 +126,11 @@ namespace Scratch.GeneticImageCopy
                 File.Delete("final.jpg");
                 _minGenerationGapBetweenWrites = (int)(_minGenerationGapBetweenWrites * 1.01m);
             }
-            var shapeCount = genes.Length / shapeSizeInBytes;
+            int shapeCount = genes.Length / shapeSizeInBytes;
             using (var generatedBitmap = GenesToBitmap<T>(genes, shapeSizeInBytes, width, height, targetImage.PixelFormat))
             {
-                var combinedWidth = Math.Max(400,2 * width); // ensure room for elapsed string
-                using (var combined = new Bitmap(combinedWidth, 20 + height))
+                int combinedWidth = Math.Max(400, 2 * width); // ensure room for elapsed string
+                using (var combined = new Bitmap(2 * width, 20 + height))
                 {
                     using (var graphics = Graphics.FromImage(combined))
                     {
@@ -130,21 +139,17 @@ namespace Scratch.GeneticImageCopy
                             for (int j = 0; j < height; j++)
                             {
                                 combined.SetPixel(i, j, generatedBitmap.GetPixel(i, j));
-                                combined.SetPixel(combinedWidth - width + i, j, targetImage.GetPixel(i, j));
+                                combined.SetPixel(width + i, j, targetImage.GetPixel(i, j));
                             }
                         }
 
-//                        var srcRect = new Rectangle(0, 0, width, height);
-//                        graphics.DrawImage(generatedBitmap, 0, 0, srcRect, GraphicsUnit.Pixel);
-//                        graphics.DrawImage(targetImage, width, 0, srcRect, GraphicsUnit.Pixel);
-
                         graphics.FillRectangle(Brushes.White, 0, height, combinedWidth, 20);
-                        var elapsed = timer.Elapsed.ToString();
+                        string elapsed = timer.Elapsed.ToString();
                         graphics.DrawString(
-                            "Generation " + generation.ToString().PadRight(10) 
-                            + percentage.ToString().PadLeft(5) 
+                            "Generation " + generation.ToString().PadRight(10)
+                            + percentage.ToString().PadLeft(5)
                             + "%    elapsed: " + elapsed.Substring(0, elapsed.LastIndexOf('.'))
-                            + shapeCount.ToString().PadLeft(5)+" "+(typeof(T).Name)+(shapeCount != 1 ? "s" : ""), 
+                            + shapeCount.ToString().PadLeft(5) + " " + (typeof(T).Name) + (shapeCount != 1 ? "s" : ""),
                             new Font("Times New Roman", 12), Brushes.Black, 2, height + 1);
                     }
 
