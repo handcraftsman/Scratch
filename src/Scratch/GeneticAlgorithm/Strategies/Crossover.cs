@@ -21,7 +21,7 @@ namespace Scratch.GeneticAlgorithm.Strategies
     {
         public Crossover()
         {
-            OrderBy = 2;
+            OrderBy = 20;
         }
 
         public string Description
@@ -37,9 +37,9 @@ namespace Scratch.GeneticAlgorithm.Strategies
             int i1 = indexes.First();
             int i2 = indexes.Last();
 
-            string parentA = parents[i1].Genes;
-            string parentB = parents[i2].Genes;
-            var genes = parentA.ToArray();
+            var parentA = parents[i1].Genes;
+            var parentB = parents[i2].Genes;
+            var childGenes = parentA.ToArray();
 
             int numberOfGenesToCross = Math.Min(5, (int)(numberOfGenesToUse * slidingMutationRate));
             if (numberOfGenesInUnitOfMeaning == 1 ||
@@ -49,26 +49,87 @@ namespace Scratch.GeneticAlgorithm.Strategies
                 for (int j = 0; j < numberOfGenesToCross; j++)
                 {
                     int index0 = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
-                    genes[index0] = parentB[index0];
+                    childGenes[index0] = parentB[index0];
                 }
+                VerifyGeneLength(parentA, childGenes);
+                return new GeneSequence(childGenes, this);
             }
             else
             {
                 int numberOfUnitsToCross = numberOfGenesToCross / numberOfGenesInUnitOfMeaning;
                 int index = getRandomInt(numberOfUnitsToCross) * numberOfGenesInUnitOfMeaning;
-                Array.Copy(parentB.ToArray(), index, genes, index, numberOfGenesInUnitOfMeaning);
+                Array.Copy(parentB.ToArray(), index, childGenes, index, numberOfGenesInUnitOfMeaning);
+
+                VerifyGeneLength(parentA, childGenes);
+                return new GeneSequence(childGenes, new CrossoverMidUnitOfMeaning());
             }
-            string childGenes = new String(genes);
-            VerifyGeneLength(parentA, childGenes);
-            return new GeneSequence(childGenes, this);
         }
 
         public int OrderBy { get; set; }
 
-        [Conditional("Debug")]
-        private static void VerifyGeneLength(string parentA, string childGenes)
+        [Conditional("DEBUG")]
+        private static void VerifyGeneLength(ICollection<char> parentA, ICollection<char> childGenes)
         {
-            if (childGenes.Length != parentA.Length)
+            if (childGenes.Count != parentA.Count)
+            {
+                throw new ArgumentException("result is different length from parent");
+            }
+        }
+    }
+    public class CrossoverMidUnitOfMeaning : IChildGenerationStrategy
+    {
+        public CrossoverMidUnitOfMeaning()
+        {
+            OrderBy = 21;
+        }
+
+        public string Description
+        {
+            get { return "MCrossover"; }
+        }
+
+        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt, int freezeGenesUpTo)
+        {
+            var indexes = Enumerable.Range(0, parents.Count)
+                .Shuffle().Take(2).ToArray();
+
+            int i1 = indexes.First();
+            int i2 = indexes.Last();
+
+            var parentA = parents[i1].Genes;
+            var parentB = parents[i2].Genes;
+            var childGenes = parentA.ToArray();
+
+            int numberOfGenesToCross = Math.Min(5, (int)(numberOfGenesToUse * slidingMutationRate));
+            if (numberOfGenesInUnitOfMeaning == 1 ||
+                numberOfGenesToUse - freezeGenesUpTo == numberOfGenesInUnitOfMeaning ||
+                getRandomInt(2) == 0)
+            {
+                for (int j = 0; j < numberOfGenesToCross; j++)
+                {
+                    int index0 = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
+                    childGenes[index0] = parentB[index0];
+                }
+                VerifyGeneLength(parentA, childGenes);
+                return new GeneSequence(childGenes, new Crossover());
+            }
+            else
+            {
+                int numberOfUnitsToCross = numberOfGenesToCross / numberOfGenesInUnitOfMeaning;
+                int index = getRandomInt(numberOfUnitsToCross) * numberOfGenesInUnitOfMeaning;
+                Array.Copy(parentB.ToArray(), index, childGenes, index, numberOfGenesInUnitOfMeaning);
+
+                VerifyGeneLength(parentA, childGenes);
+                return new GeneSequence(childGenes, this);
+            }
+        }
+
+        public int OrderBy { get; set; }
+
+        [Conditional("DEBUG")]
+        private static void VerifyGeneLength(ICollection<char> parentA, ICollection<char> childGenes)
+        {
+            if (childGenes.Count != parentA.Count)
             {
                 throw new ArgumentException("result is different length from parent");
             }

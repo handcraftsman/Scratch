@@ -18,7 +18,7 @@ namespace Scratch.GeneticAlgorithm.Strategies
     {
         public Swap()
         {
-            OrderBy = 5;
+            OrderBy = 50;
         }
 
         public int OrderBy { get; set; }
@@ -31,31 +31,41 @@ namespace Scratch.GeneticAlgorithm.Strategies
         public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt, int freezeGenesUpTo)
         {
             var parent = parents[getRandomInt(parents.Count)];
-            var genes = parent.Genes.ToCharArray();
 
-            int pointA = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
+            bool useHint = getRandomInt(2) == 0 &&
+                parent.Fitness != null &&
+                parent.Fitness.UnitOfMeaningIndexHint != null &&
+                parent.Fitness.UnitOfMeaningIndexHint.Value >= freezeGenesUpTo;
+
+            int pointA = useHint 
+                ? parent.Fitness.UnitOfMeaningIndexHint.Value * numberOfGenesInUnitOfMeaning
+                : getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
             int pointB = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
             if (pointA == pointB)
             {
                 return parent.Clone();
             }
+
+            var childGenes = parent.Genes.ToArray();
+
+            IChildGenerationStrategy type = this;
             if (numberOfGenesInUnitOfMeaning == 1 ||
                 numberOfGenesToUse - freezeGenesUpTo == numberOfGenesInUnitOfMeaning ||
                 getRandomInt(2) == 0)
             {
-                SwapTwoGenes(genes, pointA, pointB);
+                SwapTwoGenes(childGenes, pointA, pointB);
+                type = new SwapMidUnitOfMeaning();
             }
             else
             {
                 pointA /= numberOfGenesInUnitOfMeaning;
                 pointB /= numberOfGenesInUnitOfMeaning;
-                SwapTwoUnitsOfMeaning(genes, pointA, pointB, numberOfGenesInUnitOfMeaning);
+                SwapTwoUnitsOfMeaning(childGenes, pointA, pointB, numberOfGenesInUnitOfMeaning);
             }
 
-            string childGenes = new String(genes);
             VerifyGeneLength(parent, childGenes);
 
-            var child = new GeneSequence(childGenes, this);
+            var child = new GeneSequence(childGenes, type);
 
             return child;
         }
@@ -82,10 +92,90 @@ namespace Scratch.GeneticAlgorithm.Strategies
             CopyUnitOfMeaningToGenesAtOffset(unitA, genes, offsetB);
         }
 
-        [Conditional("Debug")]
-        private static void VerifyGeneLength(GeneSequence parent, string childGenes)
+        [Conditional("DEBUG")]
+        private static void VerifyGeneLength(GeneSequence parent, ICollection<char> childGenes)
         {
-            if (childGenes.Length != parent.Genes.Length)
+            if (childGenes.Count != parent.Genes.Length)
+            {
+                throw new ArgumentException("result is different length from parent");
+            }
+        }
+    }
+    public class SwapMidUnitOfMeaning : IChildGenerationStrategy
+    {
+        public SwapMidUnitOfMeaning()
+        {
+            OrderBy = 51;
+        }
+
+        public int OrderBy { get; set; }
+
+        public string Description
+        {
+            get { return "MSwap"; }
+        }
+
+        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt, int freezeGenesUpTo)
+        {
+            var parent = parents[getRandomInt(parents.Count)];
+
+            int pointA = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
+            int pointB = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
+            if (pointA == pointB)
+            {
+                return parent.Clone();
+            }
+
+            var childGenes = parent.Genes.ToArray();
+
+            IChildGenerationStrategy type = this;
+            if (numberOfGenesInUnitOfMeaning == 1 ||
+                numberOfGenesToUse - freezeGenesUpTo == numberOfGenesInUnitOfMeaning ||
+                getRandomInt(2) == 0)
+            {
+                SwapTwoGenes(childGenes, pointA, pointB);
+            }
+            else
+            {
+                pointA /= numberOfGenesInUnitOfMeaning;
+                pointB /= numberOfGenesInUnitOfMeaning;
+                SwapTwoUnitsOfMeaning(childGenes, pointA, pointB, numberOfGenesInUnitOfMeaning);
+                type = new Swap();
+            }
+
+            VerifyGeneLength(parent, childGenes);
+
+            var child = new GeneSequence(childGenes, type);
+
+            return child;
+        }
+
+        private static void CopyUnitOfMeaningToGenesAtOffset(char[] unit, char[] genes, int byteOffset)
+        {
+            Array.Copy(unit, 0, genes, byteOffset, unit.Length);
+        }
+
+        private static void SwapTwoGenes(IList<char> genes, int pointA, int pointB)
+        {
+            char temp = genes[pointA];
+            genes[pointA] = genes[pointB];
+            genes[pointB] = temp;
+        }
+
+        private static void SwapTwoUnitsOfMeaning(char[] genes, int pointA, int pointB, int numberOfGenesInUnitOfMeaning)
+        {
+            int offsetA = pointA * numberOfGenesInUnitOfMeaning;
+            var unitA = genes.Skip(offsetA).Take(numberOfGenesInUnitOfMeaning).ToArray();
+            int offsetB = pointB & numberOfGenesInUnitOfMeaning;
+            var unitB = genes.Skip(offsetB).Take(numberOfGenesInUnitOfMeaning).ToArray();
+            CopyUnitOfMeaningToGenesAtOffset(unitB, genes, offsetA);
+            CopyUnitOfMeaningToGenesAtOffset(unitA, genes, offsetB);
+        }
+
+        [Conditional("DEBUG")]
+        private static void VerifyGeneLength(GeneSequence parent, ICollection<char> childGenes)
+        {
+            if (childGenes.Count != parent.Genes.Length)
             {
                 throw new ArgumentException("result is different length from parent");
             }

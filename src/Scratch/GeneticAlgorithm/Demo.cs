@@ -44,7 +44,7 @@ namespace Scratch.GeneticAlgorithm
         {
             const string genes = @"`1234567890-=~!@#$%^&*()_+qwertyuiop[]\QWERTYUIOP{}|asdfghjkl;'ASDFGHJKL:""zxcvbnm,./ZXCVBNM<>? ";
             string target = "Hello world!";
-            Func<string, uint> calcFitness = str =>
+            Func<string, FitnessResult> calcFitness = str =>
                 {
                     uint fitness = 0;
                     for (int j = 0; j < target.Length; j++)
@@ -59,10 +59,13 @@ namespace Scratch.GeneticAlgorithm
                             throw;
                         }
                     }
-                    return fitness;
+                    return new FitnessResult
+                        {
+                            Value = fitness
+                        };
                 };
-            string best = new GeneticSolver().GetBestGenetically(target.Length, genes, calcFitness);
-            Console.WriteLine(best);
+            var best = new GeneticSolver().GetBestGenetically(target.Length, genes, calcFitness);
+            Console.WriteLine(best.Genes);
         }
     }
 }

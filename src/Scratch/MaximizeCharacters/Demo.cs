@@ -111,17 +111,17 @@ namespace Scratch.MaximizeCharacters
 
 		private static void FindBest(int numberOfCharacters, int expectedLength)
 		{
-			Func<string, uint> calcFitness = x =>
+			Func<string, FitnessResult> calcFitness = x =>
 				{
 					string result = Run(x);
-                    return (uint)(expectedLength*2 - result.Length);
+                    return new FitnessResult { Value = (uint)(expectedLength * 2 - result.Length) };
 				};
 		    var geneticSolver = new GeneticSolver(300)
 		        {
 		            UseFastSearch = true
 		        };
-		    string best = geneticSolver.GetBestGenetically(numberOfCharacters, "ASCP", calcFitness);
-			string finalString = Run(best);
+		    var best = geneticSolver.GetBestGenetically(numberOfCharacters, "ASCP", calcFitness);
+			string finalString = Run(best.Genes);
 			Console.WriteLine(best + " generatates final string with length " + finalString.Length);
 		    finalString.Length.ShouldBeGreaterThanOrEqualTo((int)(.8m*expectedLength));
 		}

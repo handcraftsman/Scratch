@@ -12,42 +12,55 @@ using System;
 
 using Scratch.GeneticAlgorithm.Strategies;
 
+using System.Linq;
+
 namespace Scratch.GeneticAlgorithm
 {
     public class GeneSequence
     {
-        public static readonly uint DefaultFitness = UInt32.MaxValue;
+        public static readonly FitnessResult DefaultFitness = new FitnessResult { Value = UInt32.MaxValue };
+        private string _stringGenes;
 
-        public GeneSequence(string genes, IChildGenerationStrategy strategy)
+        public GeneSequence(char[] genes, IChildGenerationStrategy strategy)
         {
             Genes = genes;
             Fitness = DefaultFitness;
             Strategy = strategy;
         }
 
-        public uint Fitness { get; set; }
+        public FitnessResult Fitness { get; set; }
         public int Generation { get; set; }
-        public string Genes { get; set; }
+        public char[] Genes { get; set; }
 
         public IChildGenerationStrategy Strategy { get; private set; }
 
         public GeneSequence Clone()
         {
-            return new GeneSequence(Genes, Strategy)
+            var geneSequence = new GeneSequence(Genes.ToArray(), Strategy)
                 {
                     Fitness = Fitness
                 };
+            if (_stringGenes !=null)
+            {
+                geneSequence._stringGenes = _stringGenes;
+            }
+            return geneSequence;
+        }
+
+        public string GetStringGenes()
+        {
+            return _stringGenes ?? (_stringGenes = new string(Genes ?? new char[] { }));
         }
 
         public override string ToString()
         {
-            string dispGenes = Genes ?? "";
+            string dispGenes = GetStringGenes();
             if (dispGenes.Length > 20)
             {
                 dispGenes = dispGenes.Substring(0, 20) + " ...";
             }
 
-            return dispGenes + " fitness: " + Fitness + " strategy: " + Strategy.Description+" gen: "+Generation;
+            return dispGenes + " fitness: " + Fitness.Value + " strategy: " + (Strategy == null ? "none" : Strategy.Description) + " gen: " + Generation;
         }
     }
 }

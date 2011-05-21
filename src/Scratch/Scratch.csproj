@@ -83,6 +83,7 @@
     <Compile Include="FindOutOfOrderListItems\IEnumerableTExtensions.cs" />
     <Compile Include="FindOutOfOrderListItems\Tests.cs" />
     <Compile Include="DirectoryParents\Tests.cs" />
+    <Compile Include="GeneticAlgorithm\Strategies\Remove.cs" />
     <Compile Include="ImageColors\Demo.cs" />
     <Compile Include="WhenDsl\IntExtensions.cs" />
     <Compile Include="WhenDsl\IntExtensionsTests.cs" />

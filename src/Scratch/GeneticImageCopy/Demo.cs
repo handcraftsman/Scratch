@@ -35,9 +35,9 @@ namespace Scratch.GeneticImageCopy
         [Explicit]
         public void Draw_with_circles()
         {
-            const string fileNameWithPath = "../../GeneticImageCopy/monalisa.jpg";
+            const string fileNameWithPath = @"D:\data\projects\csharp\Scratch\github\src\Scratch\GeneticImageCopy\monalisa.jpg";
             DeletePreviousImages();
-            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 150, true);
+            GeneticallyDuplicateWithShape<Circle>(fileNameWithPath, 500, true);
         }
 
         [Test]
@@ -120,7 +120,8 @@ namespace Scratch.GeneticImageCopy
             var shapeCount = genes.Length / shapeSizeInBytes;
             using (var generatedBitmap = GenesToBitmap<T>(genes, shapeSizeInBytes, width, height, targetImage.PixelFormat))
             {
-                using (var combined = new Bitmap(2 * width, 20 + height))
+                var combinedWidth = Math.Max(400,2 * width); // ensure room for elapsed string
+                using (var combined = new Bitmap(combinedWidth, 20 + height))
                 {
                     using (var graphics = Graphics.FromImage(combined))
                     {
@@ -129,7 +130,7 @@ namespace Scratch.GeneticImageCopy
                             for (int j = 0; j < height; j++)
                             {
                                 combined.SetPixel(i, j, generatedBitmap.GetPixel(i, j));
-                                combined.SetPixel(width + i, j, targetImage.GetPixel(i, j));
+                                combined.SetPixel(combinedWidth - width + i, j, targetImage.GetPixel(i, j));
                             }
                         }
 
@@ -137,7 +138,7 @@ namespace Scratch.GeneticImageCopy
 //                        graphics.DrawImage(generatedBitmap, 0, 0, srcRect, GraphicsUnit.Pixel);
 //                        graphics.DrawImage(targetImage, width, 0, srcRect, GraphicsUnit.Pixel);
 
-                        graphics.FillRectangle(Brushes.White, 0, height, 2 * width, 20);
+                        graphics.FillRectangle(Brushes.White, 0, height, combinedWidth, 20);
                         var elapsed = timer.Elapsed.ToString();
                         graphics.DrawString(
                             "Generation " + generation.ToString().PadRight(10) 
@@ -167,6 +168,13 @@ namespace Scratch.GeneticImageCopy
                 shapes.Add(shape);
             }
 
+            if (pixelFormat == PixelFormat.Format1bppIndexed ||
+                pixelFormat == PixelFormat.Format4bppIndexed ||
+                pixelFormat == PixelFormat.Format8bppIndexed)
+            {
+                pixelFormat = PixelFormat.Format32bppArgb;
+            }
+
             var temp = new Bitmap(bitmapWidth, bitmapHeight, pixelFormat);
             using (var graphics = Graphics.FromImage(temp))
             {
@@ -194,7 +202,7 @@ namespace Scratch.GeneticImageCopy
 
             Console.WriteLine(width + "x" + height);
             int shapeSizeInBytes = (int)typeof(T).GetMethod("GetEncodingSizeInBytes", BindingFlags.Static | BindingFlags.Public).Invoke(null, new[] { width, (object)height });
-            Func<string, uint> calcFitness = x =>
+            Func<string, FitnessResult> calcFitness = x =>
                 {
                     using (var temp = GenesToBitmap<T>(x, shapeSizeInBytes, width, height, targetImage.PixelFormat))
                     {
@@ -202,12 +210,15 @@ namespace Scratch.GeneticImageCopy
 
                         uint fitness = CalcFitness(tempBytes, bitmapBytes);
 
-                        return fitness;
+                        return new FitnessResult
+                            {
+                                Value = fitness
+                            };
                     }
                 };
 
             int max = bitmapBytes.Length * 255;
-            var solver = new GeneticSolver(2000)
+            var solver = new GeneticSolver(200)
                 {
                     UseHillClimbing = useHillClimbing,
                     OnlyPermuteNewGenesWhileHillClimbing = false,

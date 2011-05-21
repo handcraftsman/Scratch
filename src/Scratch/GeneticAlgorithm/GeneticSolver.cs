@@ -19,25 +19,33 @@ using Scratch.ShuffleIEnumerable;
 
 namespace Scratch.GeneticAlgorithm
 {
+    public class FitnessResult
+    {
+        public uint Value;
+        public string UniqueKey;
+        public int? UnitOfMeaningIndexHint;
+    }
+
     public class GeneticSolver
     {
         private const int DefaultMaxGenerationsWithoutImprovement = 16384;
+        private const int DefaultMinimumStrategyPercentage = 2;
         private const decimal DefaultMutationRate = 0.25m;
         private const int EliteParentCount = (int)(GaPopsize * GaElitrate);
         private const float GaElitrate = 0.10f;
         private const int GaPopsize = 2048;
         private const int MaxImprovmentsToKeepFromEachRound = 5;
-        private const int MinimumStrategyPercentage = 2;
-        private const int RandomCitizenCount = 10;
         private const decimal SlideRate = 0.001m;
 
         private static decimal _slidingMutationRate = DefaultMutationRate;
         private readonly List<Pair<decimal, IChildGenerationStrategy>> _childGenerationStrategies;
         private readonly int _gaMaxGenerationsWithoutImprovement = DefaultMaxGenerationsWithoutImprovement;
         private readonly IChildGenerationStrategy _randomStrategy;
+        private int _minimumStrategyPercentage = DefaultMinimumStrategyPercentage;
         private int _numberOfGenesInUnitOfMeaning = 1;
         private Random _random;
         private int _randomSeed;
+        private readonly MutationMidUnitOfMeaning _mutationStrategy;
 
         public GeneticSolver()
             : this(DefaultMaxGenerationsWithoutImprovement)
@@ -66,6 +74,7 @@ namespace Scratch.GeneticAlgorithm
                 );
 
             _randomStrategy = childGenerationStrategies.FirstOrDefault(x => x.GetType() == typeof(RandomGenes)) ?? new RandomGenes();
+            _mutationStrategy = new MutationMidUnitOfMeaning();
 
             OnlyPermuteNewGenesWhileHillClimbing = true;
             DisplayGenes = (generation, fitness, genes, howCreated) => Console.WriteLine("Generation {0} fitness {1}: {2}", generation.ToString().PadLeft(_gaMaxGenerationsWithoutImprovement.ToString().Length), fitness, genes);
@@ -73,27 +82,32 @@ namespace Scratch.GeneticAlgorithm
 
         public Action<int, uint, string, string> DisplayGenes { get; set; }
         public bool DisplayHowCreatedPercentages { get; set; }
+        public int MinimumStrategyPercentage
+        {
+            get { return _minimumStrategyPercentage; }
+            set { _minimumStrategyPercentage = value; }
+        }
         public int NumberOfGenesInUnitOfMeaning
         {
             get { return _numberOfGenesInUnitOfMeaning; }
             set { _numberOfGenesInUnitOfMeaning = value; }
         }
+        public bool OnlyPermuteNewGenesWhileHillClimbing { get; set; }
         public int RandomSeed
         {
             set { _randomSeed = value; }
         }
         public bool UseFastSearch { get; set; }
         public bool UseHillClimbing { get; set; }
-        public bool OnlyPermuteNewGenesWhileHillClimbing { get; set; }
 
-        private static IEnumerable<GeneSequence> CalcFitness(IList<GeneSequence> population, Func<string, uint> calcDistanceFromTarget)
+        private static IEnumerable<GeneSequence> CalcFitness(IList<GeneSequence> population, Func<string, FitnessResult> calcDistanceFromTarget)
         {
             for (int i = 0; i < GaPopsize; i++)
             {
                 var geneSequence = population[i];
-                if (geneSequence.Fitness == GeneSequence.DefaultFitness)
+                if (geneSequence.Fitness.Value == GeneSequence.DefaultFitness.Value)
                 {
-                    geneSequence.Fitness = calcDistanceFromTarget(geneSequence.Genes);
+                    geneSequence.Fitness = calcDistanceFromTarget(geneSequence.GetStringGenes());
                 }
                 yield return geneSequence;
             }
@@ -133,7 +147,7 @@ namespace Scratch.GeneticAlgorithm
 
         private static int FitnessSort(GeneSequence x, GeneSequence y)
         {
-            var result = x.Fitness.CompareTo(y.Fitness);
+            int result = x.Fitness.Value.CompareTo(y.Fitness.Value);
             if (result == 0)
             {
                 result = y.Generation.CompareTo(x.Generation);
@@ -144,11 +158,7 @@ namespace Scratch.GeneticAlgorithm
         private void GenerateChildren(int freezeGenesUpTo, int numberOfGenesToUse, IEnumerable<GeneSequence> population, IList<GeneSequence> buffer, Func<char> getRandomGene)
         {
             var unique = new HashSet<string>();
-            var parents = population.Where(x => unique.Add(x.Genes)).Take(50).ToList();
-//            for (int i = 0; i < RandomCitizenCount; i++)
-//            {
-//                parents.Add(_randomStrategy.Generate(null, numberOfGenesToUse, getRandomGene, NumberOfGenesInUnitOfMeaning, 0, _random.Next, freezeGenesUpTo));
-//            }
+            var parents = population.Where(x => unique.Add(x.GetStringGenes())).Take(50).ToList();
 
             for (int i = 0; i < GaPopsize; i++)
             {
@@ -165,7 +175,7 @@ namespace Scratch.GeneticAlgorithm
             }
         }
 
-        public string GetBestGenetically(int numberOfGenesToUse, string possibleGenes, Func<string, uint> calcFitness)
+        public GeneSequence GetBestGenetically(int numberOfGenesToUse, string possibleGenes, Func<string, FitnessResult> calcFitness)
         {
             int seed = _randomSeed != 0 ? _randomSeed : (int)DateTime.Now.Ticks;
             Console.WriteLine("using random seed: " + seed);
@@ -183,16 +193,37 @@ namespace Scratch.GeneticAlgorithm
                 {
                     population.First()
                 };
-            previousBests[0].Fitness = calcFitness(previousBests[0].Genes);
+            previousBests[0].Fitness = calcFitness(previousBests[0].GetStringGenes());
             int generation = 0;
+
+            var generationsBetweenImprovments = Enumerable.Repeat(_gaMaxGenerationsWithoutImprovement, 20).ToList();
 
             if (UseHillClimbing)
             {
+                int failureToImproveCount = 0;
+                var bestEver = new GeneSequence(new char[] { }, null)
+                    {
+                        Fitness = new FitnessResult{Value = UInt32.MaxValue}
+                    };
                 for (int i = NumberOfGenesInUnitOfMeaning; i < numberOfGenesToUse - 1; i += NumberOfGenesInUnitOfMeaning)
                 {
-                    GetBestGenetically(OnlyPermuteNewGenesWhileHillClimbing ? i - NumberOfGenesInUnitOfMeaning : 0, i, getRandomGene, 20, previousBests, population, spare, calcFitness, ref generation);
+                    GetBestGenetically(OnlyPermuteNewGenesWhileHillClimbing ? i - NumberOfGenesInUnitOfMeaning : 0, i, getRandomGene, previousBests, population, spare, calcFitness, generationsBetweenImprovments, ref generation);
                     var incrementalBest = previousBests.First();
-
+                    if (incrementalBest.Fitness.Value < bestEver.Fitness.Value)
+                    {
+                        bestEver = incrementalBest.Clone();
+                        failureToImproveCount = 0;
+                    }
+                    else
+                    {
+                        failureToImproveCount++;
+                        if (incrementalBest.Fitness.Value > bestEver.Fitness.Value * 1.05m || failureToImproveCount >= 5)
+                        {
+                            Console.WriteLine("Fitness appears to be getting worse, returning best result: fitness " + bestEver.Fitness.Value + " in generation " + bestEver.Generation);
+                            return bestEver;
+                        }
+                    }
+                    var parents = previousBests.ToList();
                     population.Clear();
                     spare.Clear();
 
@@ -200,55 +231,72 @@ namespace Scratch.GeneticAlgorithm
                     for (int j = 0; j < GaPopsize; j++)
                     {
                         var random = _randomStrategy.Generate(null, NumberOfGenesInUnitOfMeaning, getRandomGene, NumberOfGenesInUnitOfMeaning, _slidingMutationRate, _random.Next, 0);
-                        var newChild = incrementalBest.Clone();
-                        newChild.Genes = newChild.Genes + random.Genes;
-                        newChild.Fitness = GeneSequence.DefaultFitness;
+                        var newChild = new GeneSequence(parents[j % parents.Count].Genes.Concat(random.Genes).ToArray(), _mutationStrategy)
+                            {
+                                Fitness = GeneSequence.DefaultFitness
+                            };
 
                         population.Add(newChild);
                         spare.Add(newChild.Clone());
                     }
-                    previousBests.Add(population.Select(x=>
+                    previousBests.AddRange(population.Select(x =>
                         {
-                            x.Fitness = calcFitness(x.Genes);
+                            x.Fitness = calcFitness(x.GetStringGenes());
                             return x;
-                        }).FirstOrDefault(x=>x.Fitness < incrementalBest.Fitness)??population.OrderBy(x=>x.Fitness).First());
+                        }).Where(x => x.Fitness.Value < incrementalBest.Fitness.Value));
+                    if (previousBests.Count < 100)
+                    {
+                        previousBests.AddRange(population.OrderBy(x => x.Fitness.Value).Take(100 - previousBests.Count));
+                    }
+                    SortByFitness(previousBests);
                     int count = 1 + (i / NumberOfGenesInUnitOfMeaning);
                     Console.WriteLine("> " + count);
-                    if (previousBests[0].Fitness < incrementalBest.Fitness)
+                    if (previousBests[0].Fitness.Value < incrementalBest.Fitness.Value)
                     {
                         PrintBest(generation, previousBests[0]);
                     }
                 }
+                return bestEver;
             }
 
-            string best = GetBestGenetically(0, numberOfGenesToUse, getRandomGene, _gaMaxGenerationsWithoutImprovement, previousBests, population, spare, calcFitness, ref generation);
+            GetBestGenetically(0, numberOfGenesToUse, getRandomGene, previousBests, population, spare, calcFitness, generationsBetweenImprovments, ref generation);
+            var best = previousBests.First();
             return best;
         }
 
-        private string GetBestGenetically(int freezeGenesUpTo, int numberOfGenesToUse, Func<char> getRandomGene, int maxGenerationsWithoutImprovement, List<GeneSequence> previousBests, List<GeneSequence> population, List<GeneSequence> spare, Func<string, uint> calcFitness, ref int generation)
+        private void GetBestGenetically(int freezeGenesUpTo, int numberOfGenesToUse, Func<char> getRandomGene, List<GeneSequence> previousBests, List<GeneSequence> population, List<GeneSequence> spare, Func<string, FitnessResult> calcFitness, ICollection<int> generationsBetweenImprovments, ref int generation)
         {
             _slidingMutationRate = DefaultMutationRate;
-            for (int i = 0; i < maxGenerationsWithoutImprovement; i++, generation++)
+            int fastSearchPopulationSize = GaPopsize / 10 + 4 * numberOfGenesToUse / _numberOfGenesInUnitOfMeaning;
+            int maxGenerationsWithoutImprovement = (int)(generationsBetweenImprovments.Average() * 1.5);
+            Console.WriteLine("> max generations to run without improvement: " + maxGenerationsWithoutImprovement);
+            int maxGenerationsWithoutNewSequences = maxGenerationsWithoutImprovement / 10;
+            int generationsWithoutNewSequences = 0;
+            int i = 0;
+            for (; i < maxGenerationsWithoutImprovement && generationsWithoutNewSequences <= maxGenerationsWithoutNewSequences; i++, generation++)
             {
-                var previousBestLookup = new HashSet<string>(previousBests.Select(x => x.Genes));
+                var previousBestLookup = new HashSet<string>(previousBests.Select(x => x.Fitness.UniqueKey ?? x.GetStringGenes()));
                 var populationWithFitness = CalcFitness(population, calcFitness);
 
                 var first = populationWithFitness.First();
-                uint worstFitness = previousBests[previousBests.Count / 2].Fitness;
+                var worstFitness = previousBests[previousBests.Count / 2].Fitness.Value;
                 var newSequences = populationWithFitness
-                    .Take(UseFastSearch && i < 20 ? GaPopsize / 10 : GaPopsize)
-                    .Where(x => x.Fitness <= worstFitness)
-                    .Where(x => previousBestLookup.Add(x.Genes))
+                    .Take(UseFastSearch /*&& i < 20*/ ? fastSearchPopulationSize : GaPopsize)
+                    .Where(x => x.Fitness.Value <= worstFitness)
+                    .Where(x => previousBestLookup.Add(x.Fitness.UniqueKey ?? x.GetStringGenes()))
                     .Take(UseFastSearch ? MaxImprovmentsToKeepFromEachRound : (int)((1 - _slidingMutationRate) * GaPopsize))
                     .ToList();
 
                 if (newSequences.Any())
                 {
+                    generationsWithoutNewSequences = 0;
                     SortByFitness(newSequences);
-                    uint previousBestFitness = previousBests.First().Fitness;
-                    if (newSequences.First().Fitness < previousBestFitness)
+                    var previousBestFitness = previousBests.First().Fitness.Value;
+                    if (newSequences.First().Fitness.Value < previousBestFitness)
                     {
                         PrintBest(generation, newSequences.First());
+//                        Console.WriteLine("> improved after generation " + i);
+                        generationsBetweenImprovments.Add(i);
                         i = -1;
                     }
                     foreach (var copy in newSequences.Select(geneSequence => geneSequence.Clone()))
@@ -256,7 +304,7 @@ namespace Scratch.GeneticAlgorithm
                         copy.Generation = generation;
                         previousBests.Add(copy);
                     }
-                    int numberToKeep = Math.Max(100, previousBests.Count(x => x.Fitness == first.Fitness));
+                    int numberToKeep = Math.Max(100, previousBests.Count(x => x.Fitness.Value == first.Fitness.Value));
                     SortByFitness(previousBests);
                     if (numberToKeep < previousBests.Count)
                     {
@@ -268,10 +316,15 @@ namespace Scratch.GeneticAlgorithm
                 }
                 else
                 {
+                    generationsWithoutNewSequences++;
+                    if (generationsWithoutNewSequences > maxGenerationsWithoutNewSequences)
+                    {
+                        break;
+                    }
                     _slidingMutationRate = Math.Max(_slidingMutationRate - SlideRate, 0);
                 }
 
-                if (first.Fitness == 0)
+                if (first.Fitness.Value == 0)
                 {
                     break;
                 }
@@ -281,7 +334,10 @@ namespace Scratch.GeneticAlgorithm
                 spare = population;
                 population = temp;
             }
-            return previousBests.First().Genes;
+
+            generationsBetweenImprovments.Add(i);
+
+//            previousBests.First().GetStringGenes();
         }
 
         private void InitPopulation(int numberOfGenesToUse, ICollection<GeneSequence> population, List<GeneSequence> buffer, Func<char> getRandomGene)
@@ -298,7 +354,7 @@ namespace Scratch.GeneticAlgorithm
 
         private void PrintBest(int generation, GeneSequence geneSequence)
         {
-            DisplayGenes(1 + generation, geneSequence.Fitness, geneSequence.Genes, geneSequence.Strategy.Description);
+            DisplayGenes(1 + generation, geneSequence.Fitness.Value, geneSequence.GetStringGenes(), geneSequence.Strategy.Description);
         }
 
         private static void SortByFitness(List<GeneSequence> population)

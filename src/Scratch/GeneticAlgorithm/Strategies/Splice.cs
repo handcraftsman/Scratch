@@ -21,7 +21,7 @@ namespace Scratch.GeneticAlgorithm.Strategies
     {
         public Splice()
         {
-            OrderBy = 1;
+            OrderBy = 10;
         }
 
         public string Description
@@ -37,12 +37,79 @@ namespace Scratch.GeneticAlgorithm.Strategies
             int i1 = indexes.First();
             int i2 = indexes.Last();
             int sliceIndex = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
+            var parentA = parents[i1];
 
+            IChildGenerationStrategy type = this;
+            if (numberOfGenesInUnitOfMeaning > 1 &&
+                numberOfGenesToUse - freezeGenesUpTo != numberOfGenesInUnitOfMeaning &&
+                getRandomInt(2) == 1)
+            {
+                bool useHint = getRandomInt(2) == 0 && 
+                    parentA.Fitness != null && 
+                    parentA.Fitness.UnitOfMeaningIndexHint != null &&
+                    parentA.Fitness.UnitOfMeaningIndexHint.Value >= freezeGenesUpTo;
+
+                sliceIndex = useHint 
+                    ? parentA.Fitness.UnitOfMeaningIndexHint.Value * numberOfGenesInUnitOfMeaning
+                    : sliceIndex - sliceIndex % numberOfGenesInUnitOfMeaning;
+            }
+            else
+            {
+                type = new SpliceMidUnitOfMeaning();
+            }
+
+            if (sliceIndex == 0)
+            {
+                return parentA.Clone();
+            }
+
+            var parentB = parents[i2];
+
+            var childGenes = parentA.Genes.Take(sliceIndex).Concat(parentB.Genes.Skip(sliceIndex)).ToArray();
+            VerifyGeneLength(parentA, childGenes);
+            var child = new GeneSequence(childGenes, type);
+            return child;
+        }
+
+        public int OrderBy { get; set; }
+
+        [Conditional("DEBUG")]
+        private static void VerifyGeneLength(GeneSequence parentA, ICollection<char> childGenes)
+        {
+            if (childGenes.Count != parentA.Genes.Length)
+            {
+                throw new ArgumentException("result is different length from parent");
+            }
+        }
+    }
+    public class SpliceMidUnitOfMeaning : IChildGenerationStrategy
+    {
+        public SpliceMidUnitOfMeaning()
+        {
+            OrderBy = 11;
+        }
+
+        public string Description
+        {
+            get { return "MSplice"; }
+        }
+
+        public GeneSequence Generate(IList<GeneSequence> parents, int numberOfGenesToUse, Func<char> getRandomGene, int numberOfGenesInUnitOfMeaning, decimal slidingMutationRate, Func<int, int> getRandomInt, int freezeGenesUpTo)
+        {
+            var indexes = Enumerable.Range(0, parents.Count)
+                .Shuffle().Take(2).ToArray();
+
+            int i1 = indexes.First();
+            int i2 = indexes.Last();
+            int sliceIndex = getRandomInt(numberOfGenesToUse - freezeGenesUpTo) + freezeGenesUpTo;
+
+            IChildGenerationStrategy type = this;
             if (numberOfGenesInUnitOfMeaning > 1 &&
                 numberOfGenesToUse - freezeGenesUpTo != numberOfGenesInUnitOfMeaning &&
                 getRandomInt(2) == 1)
             {
                 sliceIndex = sliceIndex - sliceIndex % numberOfGenesInUnitOfMeaning;
+                type = new Splice();
             }
 
             var parentA = parents[i1];
@@ -53,18 +120,18 @@ namespace Scratch.GeneticAlgorithm.Strategies
 
             var parentB = parents[i2];
 
-            string childGenes = parentA.Genes.Substring(0, sliceIndex) + parentB.Genes.Substring(sliceIndex);
+            var childGenes = parentA.Genes.Take(sliceIndex).Concat(parentB.Genes.Skip(sliceIndex)).ToArray();
             VerifyGeneLength(parentA, childGenes);
-            var child = new GeneSequence(childGenes, this);
+            var child = new GeneSequence(childGenes, type);
             return child;
         }
 
         public int OrderBy { get; set; }
 
-        [Conditional("Debug")]
-        private static void VerifyGeneLength(GeneSequence parentA, string childGenes)
+        [Conditional("DEBUG")]
+        private static void VerifyGeneLength(GeneSequence parentA, ICollection<char> childGenes)
         {
-            if (childGenes.Length != parentA.Genes.Length)
+            if (childGenes.Count != parentA.Genes.Length)
             {
                 throw new ArgumentException("result is different length from parent");
             }

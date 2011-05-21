@@ -57,23 +57,29 @@ namespace Scratch.RegexFromSamples
 			string distinctSymbols = new String(target.SelectMany(x => x).Distinct().ToArray());
 			string genes = distinctSymbols + "?*()+";
 
-			Func<string, uint> calcFitness = str =>
+			Func<string, FitnessResult> calcFitness = str =>
 				{
 					if (!IsValidRegex(str))
 					{
-						return Int32.MaxValue;
+					    return new FitnessResult
+					        {
+					            Value = Int32.MaxValue
+					        };
 					}
 					var regex = new Regex("^" + str + "$");
 					uint fitness = target.Aggregate<string, uint>(0, (current, t) => current + (regex.IsMatch(t) ? 0U : 1));
 					uint nonFitness = dontMatch.Aggregate<string, uint>(0, (current, t) => current + (regex.IsMatch(t) ? 10U : 0));
-					return fitness + nonFitness;
+				    return new FitnessResult
+				        {
+				            Value = fitness + nonFitness
+				        };
 				};
 
 			int targetGeneLength = 1;
 			for (;;)
 			{
-				string best = new GeneticSolver(50+10*targetGeneLength).GetBestGenetically(targetGeneLength, genes, calcFitness);
-				if (calcFitness(best) != 0)
+			    var best = new GeneticSolver(50 + 10 * targetGeneLength).GetBestGenetically(targetGeneLength, genes, calcFitness);
+				if (calcFitness(best.GetStringGenes()).Value != 0)
 				{
 					Console.WriteLine("-- not solved with regex of length " + targetGeneLength);
 					targetGeneLength++;
