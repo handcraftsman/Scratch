@@ -33,6 +33,18 @@ namespace Scratch.RegexFromSamples
 
 			GenerateRegex(target, dontMatch, 6);
 		}
+	
+		[Test]
+		public void Should_only_match_alphabetical_once_ignoring_whitespace()
+		{
+			var target = new[] { "abc", "abcdefghijk", "abdfkmnpstvxz", "cxy", "cdklstxy", 
+				"bfrtw", "a b c", "acg jko pr", "a z", "v  z",
+			"a  b cdefg kl", "uv xyz", "ab de gh", "x yz", "abcdefghijklmnopqrstuvwxyz"};
+			var dontMatch = new[] { "abbc", "abcb", "a bcdjkrza", "qwerty", "zyxcba", 
+				"abcdfe", "ab c dfe", "a  z  a", "asdfg", "asd  f g", "poqwoieruytjhfg" };
+
+			GenerateRegex(target, dontMatch, 30);
+		}
 
 		[Test]
 		public void Given_Sample_B()

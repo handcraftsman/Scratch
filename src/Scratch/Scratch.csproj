@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Scratch</RootNamespace>
     <AssemblyName>Scratch</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <StartupObject>Scratch.GeneticImageCopy.Demo</StartupObject>
     <FileUpgradeFlags>
@@ -18,6 +18,7 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -44,6 +45,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\FluentAssert\FluentAssert.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="nunit.framework, Version=2.5.3.9345, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\lib\NUnit\nunit.framework.dll</HintPath>
@@ -82,7 +84,10 @@
     <Compile Include="Codegolf\Graycode\Tests.cs" />
     <Compile Include="ConvertHexStringToBytes\StringExtensions.cs" />
     <Compile Include="ConvertHexStringToBytes\Tests.cs" />
+    <Compile Include="CreditCard\Tests.cs" />
     <Compile Include="DirectoryParents\TExtensions.cs" />
+    <Compile Include="Exercism\csharp\leap\Year.cs" />
+    <Compile Include="Exercism\csharp\leap\LeapTest.cs" />
     <Compile Include="FastCurrentDateTime\SystemService.cs" />
     <Compile Include="FileFtp\FtpDemo.cs" />
     <Compile Include="FillGrid\Demo.cs" />
@@ -92,8 +97,15 @@
     <Compile Include="GeneticAlgorithm\Strategies\Remove.cs" />
     <Compile Include="GeneticImageCopy\Rectangle.cs" />
     <Compile Include="GroupBySequenceDirection\Tests.cs" />
+    <Compile Include="Hierarchical\HierarchicalDataUsingClosure.cs" />
     <Compile Include="ImageColors\Demo.cs" />
+    <Compile Include="Parse\CommaSeparatedList.cs" />
+    <Compile Include="Parse\TabDelimitedSerialized.cs" />
+    <Compile Include="Rectangle\Demo.cs" />
     <Compile Include="SequentialLinq\Tests.cs" />
+    <Compile Include="Sorting\QuickSortWithInsertionSort\Class1.cs" />
+    <Compile Include="StringContainsAll\Tests.cs" />
+    <Compile Include="StringDifferences\Demo.cs" />
     <Compile Include="WhenDsl\IntExtensions.cs" />
     <Compile Include="WhenDsl\IntExtensionsTests.cs" />
     <Compile Include="WhenDsl\TExtensions.cs" />
