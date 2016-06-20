@@ -102,6 +102,9 @@
     <Compile Include="Parse\CommaSeparatedList.cs" />
     <Compile Include="Parse\TabDelimitedSerialized.cs" />
     <Compile Include="Rectangle\Demo.cs" />
+    <Compile Include="RomanNumerals\RomanTests.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="SequentialLinq\SplitByBreakInSequence.cs" />
     <Compile Include="SequentialLinq\Tests.cs" />
     <Compile Include="Sorting\QuickSortWithInsertionSort\Class1.cs" />
