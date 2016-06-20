@@ -64,10 +64,20 @@ namespace Scratch.RegexFromSamples
 			GenerateRegex(target, dontMatch, 9);
 		}
 
+		[Test]
+		public void Given_Sample_D()
+		{
+			// http://stackoverflow.com/questions/15807365/find-simplest-regular-expression-matching-all-given-strings?rq=1
+			var target = new[] { "h_q1_a", "h_q1_b", "h_q1_c", "h_p2_a", "h_p2_b", "h_p2_c" };
+			var dontMatch = new string[] { };
+
+			GenerateRegex(target, dontMatch, 16);
+		}
+
 		private static void GenerateRegex(IEnumerable<string> target, IEnumerable<string> dontMatch, int expectedLength)
 		{
 			string distinctSymbols = new String(target.SelectMany(x => x).Distinct().ToArray());
-			string genes = distinctSymbols + "?*()+";
+			string genes = distinctSymbols + "?*()[^]+";
 
 			Func<string, FitnessResult> calcFitness = str =>
 				{
