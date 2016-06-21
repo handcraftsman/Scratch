@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FluentAssert;
 using NUnit.Framework;
@@ -45,15 +44,12 @@ namespace Scratch.RomanNumerals
 		public static string ToRoman(this int i)
 		{
 			var result = "";
-			while (i > 0)
+			foreach (var kvp in Numerals.OrderByDescending(x => x.Key))
 			{
-				foreach (var kvp in Numerals.OrderByDescending(x => x.Key))
+				while (i >= kvp.Key)
 				{
-					while (i >= kvp.Key)
-					{
-						result += kvp.Value;
-						i -= kvp.Key;
-					}
+					result += kvp.Value;
+					i -= kvp.Key;
 				}
 			}
 			return result;
@@ -70,7 +66,6 @@ namespace Scratch.RomanNumerals
 			{
 				1.ToRoman().ShouldBeEqualTo("I");
 			}
-
 
 			[Test]
 			public void Given_2_should_get_II()
@@ -179,7 +174,7 @@ namespace Scratch.RomanNumerals
 			[Test]
 			public void Should_be_able_to_convert_all_integers_between_1_and_10000()
 			{
-				for (int input = 1; input <= 10000; input++)
+				for (var input = 1; input <= 10000; input++)
 				{
 					var result = input.ToRoman();
 					var roundTripped = result.FromRoman();
